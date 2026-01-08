@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crops | NutriRoot</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/auth.js"></script>
+</head>
+
+<body>
+    <!-- Top Navigation Block -->
+    <nav class="navbar">
+        <a href="dashboard.html" class="navbar-brand">
+            <img src="assets/images/logo.png" alt="NutriRoot Logo" width="24" height="24">
+            NutriRoot
+        </a>
+
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Dashboard
+            </a>
+            <a href="recommendation.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2.69l5.74 5.88-5.74 5.88-5.74-5.88z"></path>
+                    <path d="M2 22h20"></path>
+                </svg>
+                Fertilizer
+            </a>
+            <a href="crops.html" class="nav-link active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Crops
+            </a>
+            <a href="history.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                    <polyline points="17 18 23 18 23 12"></polyline>
+                </svg>
+                History
+            </a>
+            <a href="alerts.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                Alerts
+            </a>
+        </div>
+
+        <div class="user-profile">
+            <button class="btn-icon" onclick="toggleProfileMenu()" id="profileBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            <div id="profileMenu" class="dropdown-menu">
+                <div class="dropdown-header">
+                    <span class="user-name" id="dropdownUserName">User</span>
+                    <span class="user-email" id="dropdownUserEmail">email@example.com</span>
+                </div>
+                <a href="#" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    My Profile
+                </a>
+                <a href="#" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                    Settings
+                </a>
+                <div style="border-top: 1px solid #F4F7FE; margin: 0.5rem 0;"></div>
+                <a href="#" onclick="signOut()" class="dropdown-item danger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sign Out
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="page-title">Crop Suggestions</h1>
+                <p class="page-subtitle">Best crops for your current soil conditions</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="window.location.href='dashboard.html'">
+                    Enter New Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Manual Soil Data Entry Section -->
+        <div class="manual-entry-section">
+            <div class="section-card">
+                <div class="card-glow"></div>
+                <div class="section-card-header">
+                    <div class="header-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="section-card-title">Enter Soil Data for Crop Recommendations</h2>
+                        <p class="section-card-subtitle">Get personalized crop suggestions based on your soil analysis</p>
+                    </div>
+                </div>
+
+                <form id="cropsSoilForm" class="inline-form">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="crops_nitrogen">Nitrogen <span class="unit">(N)</span></label>
+                            <div class="input-wrapper">
+                                <input type="number" step="0.1" id="crops_nitrogen" required placeholder="0.0">
+                                <span class="input-suffix">mg/kg</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="crops_phosphorus">Phosphorus <span class="unit">(P)</span></label>
+                            <div class="input-wrapper">
+                                <input type="number" step="0.1" id="crops_phosphorus" required placeholder="0.0">
+                                <span class="input-suffix">mg/kg</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="crops_potassium">Potassium <span class="unit">(K)</span></label>
+                            <div class="input-wrapper">
+                                <input type="number" step="0.1" id="crops_potassium" required placeholder="0.0">
+                                <span class="input-suffix">mg/kg</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="crops_ph">Soil pH</label>
+                            <div class="input-wrapper">
+                                <input type="number" step="0.01" id="crops_ph" required placeholder="7.00">
+                                <span class="input-suffix">pH</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="crops_moisture">Moisture</label>
+                            <div class="input-wrapper">
+                                <input type="number" step="0.1" id="crops_moisture" required placeholder="0.0">
+                                <span class="input-suffix">%</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="crops_temperature">Temperature</label>
+                            <div class="input-wrapper">
+                                <input type="number" step="0.1" id="crops_temperature" required placeholder="25.0">
+                                <span class="input-suffix">°C</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-footer">
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary glass-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                                Analyze & Get Crop Suggestions
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="cropSuggestionsContainer">
+            <div class="info-section" style="text-align: center; padding: 3rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🌽</div>
+                <p style="color: var(--secondary-color);">Enter your soil parameters above to get personalized crop recommendations.</p>
+            </div>
+        </div>
+    </div>
+    <script src="js/script.js"></script>
+
+    <!-- Confirmation Sound / Animation Element -->
+    <div id="successCheck" class="success-check">
+        <svg viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+        </svg>
+    </div>
+</body>
+
+</html>

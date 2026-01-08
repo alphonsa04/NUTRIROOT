@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Reset your NutriRoot password">
+    <title>Forgot Password - NutriRoot</title>
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Reset Password</h1>
+                <p class="auth-subtitle">Enter your email to receive a password reset link</p>
+            </div>
+
+            <!-- Password Reset Form -->
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="your.email@example.com" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; margin-bottom: 1rem;">Send Reset Link</button>
+                <a href="index.html" class="btn btn-outline" style="width: 100%; justify-content: center;">Back to
+                    Login</a>
+            </form>
+
+            <!-- Messages -->
+            <div id="successMessage">
+                ✓ Password reset link sent! Check your email inbox.
+            </div>
+            <div id="errorMessage"></div>
+
+            <div class="auth-footer">
+                <p>Remember your password? <a href="index.html">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Custom Auth Logic -->
+    <script src="js/auth.js"></script>
+
+    <script>
+        // Form submission handler
+        document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            // Call auth.js function
+            resetPassword(email);
+        });
+    </script>
+</body>
+
+</html>
