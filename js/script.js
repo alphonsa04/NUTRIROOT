@@ -100,9 +100,9 @@ function showMessage(message, type = 'info') {
    ======================================== */
 
 /**
- * Save soil data to localStorage
+ * Save soil data to Firestore and localStorage
  */
-function saveSoilData(data) {
+async function saveSoilData(data) {
     try {
         // Validate data - ensure all fields have values
         const requiredFields = ['nitrogen', 'phosphorus', 'potassium', 'ph', 'moisture', 'temperature', 'crop'];
@@ -111,7 +111,6 @@ function saveSoilData(data) {
                 showMessage(`Please fill the ${field} field`, 'error');
                 return false;
             }
-            // Check for NaN if we expect a number
             if (field !== 'crop' && isNaN(data[field])) {
                 showMessage(`Please enter a valid number for ${field}`, 'error');
                 return false;
@@ -121,62 +120,115 @@ function saveSoilData(data) {
         // Add timestamp
         data.timestamp = new Date().toISOString();
 
-        // Get current user
-        const user = getCurrentUser();
-        if (user) {
-            data.userId = user.uid;
+        // Get current user from Firebase Auth
+        const user = auth.currentUser;
+        if (!user) {
+            showMessage('Session expired. Please login again.', 'error');
+            return false;
         }
 
-        // Get existing history
-        const history = getSoilHistory();
+        data.userId = user.uid;
 
-        // Add new data to history
-        history.push(data);
+        // 1. Save to Firestore (Persistent History)
+        await db.collection('soilData').doc(user.uid).collection('readings').add(data);
+        console.log('Soil data saved to Firestore history');
 
-        // Save to localStorage
-        localStorage.setItem('nutriroot_soil_history', JSON.stringify(history));
+        // 2. Save to localStorage (Instant Cache for Dashboard/Recs)
         localStorage.setItem('nutriroot_latest_soil_data', JSON.stringify(data));
 
         return true;
     } catch (error) {
         console.error('Error saving soil data:', error);
-        showMessage('Error saving data', 'error');
+        showMessage('Error saving data to cloud', 'error');
         return false;
     }
 }
 
 /**
- * Get latest soil data
+ * Get latest soil data (from cache first, then Firestore)
  */
-function getLatestSoilData() {
+async function getLatestSoilData() {
     try {
-        const data = localStorage.getItem('nutriroot_latest_soil_data');
-        return data ? JSON.parse(data) : null;
+        // 1. Try Local Storage Cache
+        const cached = localStorage.getItem('nutriroot_latest_soil_data');
+        if (cached) {
+            return JSON.parse(cached);
+        }
+
+        // 2. Fallback to Firestore Latest reading
+        const user = auth.currentUser;
+        if (!user) return null;
+
+        const snapshot = await db.collection('soilData')
+            .doc(user.uid)
+            .collection('readings')
+            .orderBy('timestamp', 'desc')
+            .limit(1)
+            .get();
+
+        if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            // Cache it for next time
+            localStorage.setItem('nutriroot_latest_soil_data', JSON.stringify(data));
+            return data;
+        }
+
+        return null;
     } catch (error) {
-        console.error('Error getting soil data:', error);
+        console.error('Error getting latest soil data:', error);
         return null;
     }
 }
 
 /**
- * Get soil data history
+ * Get soil data history from Firestore
  */
-function getSoilHistory() {
+async function getSoilHistory() {
     try {
-        const history = localStorage.getItem('nutriroot_soil_history');
-        return history ? JSON.parse(history) : [];
+        const user = auth.currentUser;
+        if (!user) return [];
+
+        const snapshot = await db.collection('soilData')
+            .doc(user.uid)
+            .collection('readings')
+            .orderBy('timestamp', 'desc')
+            .get();
+
+        const history = [];
+        snapshot.forEach(doc => {
+            history.push({ id: doc.id, ...doc.data() });
+        });
+
+        return history;
     } catch (error) {
-        console.error('Error getting soil history:', error);
+        console.error('Error getting soil history from Firestore:', error);
         return [];
     }
 }
 
 /**
- * Clear all soil data
+ * Clear all soil data (Firestore + LocalStorage)
  */
-function clearSoilData() {
-    localStorage.removeItem('nutriroot_latest_soil_data');
-    localStorage.removeItem('nutriroot_soil_history');
+async function clearSoilData() {
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // Clear Local Cache
+        localStorage.removeItem('nutriroot_latest_soil_data');
+
+        // Clear Firestore History (batch delete)
+        const snapshot = await db.collection('soilData').doc(user.uid).collection('readings').get();
+        const batch = db.batch();
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+
+        console.log('All soil records cleared');
+        return true;
+    } catch (error) {
+        console.error('Error clearing soil data:', error);
+        return false;
+    }
 }
 
 /* ========================================
@@ -448,296 +500,64 @@ function generateRecommendations(analysis, soilData) {
         });
     }
 
-    // Balanced maintenance if all are optimal
-    if (nitrogen.status === 'optimal' && phosphorus.status === 'optimal' && potassium.status === 'optimal' && recommendations.length === 0) {
-        recommendations.push({
-            fertilizer: 'N-P-K 15-15-15',
-            nutrient: 'Balanced Maintenance',
-            dosage: '50 kg/ha',
-            reason: 'Nutrient levels are currently optimal. A small maintenance dose will sustain soil health throughout the growing season.'
-        });
+    // Balanced maintenance or warnings for high levels
+    if (recommendations.length === 0) {
+        const isHigh = nitrogen.status === 'high' || phosphorus.status === 'high' || potassium.status === 'high';
+
+        if (isHigh) {
+            recommendations.push({
+                fertilizer: 'Organic Compost / No Synthetic Fertilizer',
+                nutrient: 'Soil Restoration',
+                dosage: 'As needed',
+                reason: 'Some nutrient levels are excessively high. Avoid synthetic fertilizers and focus on organic matter to balance soil biology.'
+            });
+        } else {
+            recommendations.push({
+                fertilizer: 'N-P-K 15-15-15 (Small Dose)',
+                nutrient: 'Balanced Maintenance',
+                dosage: '50 kg/ha',
+                reason: 'Nutrient levels are currently optimal. A small maintenance dose will sustain soil health throughout the growing season for ' + soilData.crop + '.'
+            });
+        }
     }
 
     return recommendations;
 }
 
 /**
- * Get crop-specific recommendations
+ * Get specific recommendations and tips for a particular crop
  */
 function getCropRecommendation(crop, analysis) {
-    const cropData = {
+    const tips = {
         'Rice': {
-            idealPH: '5.5 - 7.0',
-            idealMoisture: '50-60%',
-            npkRatio: '120:60:40',
-            notes: 'Rice requires consistent moisture. Ensure proper water management.'
+            notes: 'Rice needs consistent water levels. Ensure your soil stays at optimal moisture (40-60%).',
+            bestPH: '6.0 - 7.0'
         },
         'Wheat': {
-            idealPH: '6.0 - 7.5',
-            idealMoisture: '40-50%',
-            npkRatio: '120:60:40',
-            notes: 'Wheat prefers well-drained soil. Avoid waterlogging.'
+            notes: 'Wheat is sensitive to waterlogging. Ensure good drainage if moisture is high.',
+            bestPH: '6.0 - 7.5'
         },
         'Maize': {
-            idealPH: '5.8 - 7.0',
-            idealMoisture: '45-55%',
-            npkRatio: '150:75:75',
-            notes: 'Maize is a heavy feeder. Apply fertilizers in split doses.'
+            notes: 'Maize is a heavy feeder. Pay close attention to Nitrogen and Phosphorus levels.',
+            bestPH: '5.8 - 7.0'
         },
         'Cotton': {
-            idealPH: '6.0 - 7.5',
-            idealMoisture: '40-50%',
-            npkRatio: '120:60:60',
-            notes: 'Cotton requires good drainage and moderate moisture.'
+            notes: 'Cotton needs stable temperatures. Keep an eye on soil temperature readings.',
+            bestPH: '5.5 - 7.5'
         },
         'Sugarcane': {
-            idealPH: '6.0 - 7.5',
-            idealMoisture: '50-60%',
-            npkRatio: '150:75:100',
-            notes: 'Sugarcane needs high potassium for sugar content.'
-        },
-        'Vegetables': {
-            idealPH: '6.0 - 7.0',
-            idealMoisture: '50-60%',
-            npkRatio: '100:50:50',
-            notes: 'Most vegetables prefer slightly acidic to neutral soil.'
+            notes: 'Sugarcane needs high Nitrogen for mass. Ensure Nitrogen stays optimal.',
+            bestPH: '6.0 - 8.0'
         }
     };
 
-    return cropData[crop] || {
-        idealPH: '6.0 - 7.5',
-        idealMoisture: '40-60%',
-        npkRatio: '100:50:50',
-        notes: 'Maintain balanced nutrition and proper moisture levels.'
+    return tips[crop] || {
+        notes: 'Maintain balanced N-P-K levels and consistent monitoring for best results.',
+        bestPH: '6.0 - 7.5'
     };
 }
 
-/**
- * Generate crop suggestions based on soil analysis
- */
-function generateCropSuggestions(soilData, analysis) {
-    const suggestions = [];
-    // Analysis is the nested analysis object from analyzeSoilData
 
-
-    // Define crop requirements and scoring system
-    const crops = [
-        {
-            name: 'Rice',
-            idealPH: [5.5, 7.0],
-            idealMoisture: [50, 60],
-            idealTemperature: [20, 35],
-            nitrogenTolerance: 'medium',
-            phosphorusTolerance: 'medium',
-            potassiumTolerance: 'medium',
-            waterRequirement: 'high',
-            description: 'Rice is a staple crop that thrives in moist conditions and can tolerate slightly acidic soil.',
-            yield: 'High',
-            season: 'Kharif (Monsoon)',
-            benefits: ['High yield potential', 'Good for wet conditions', 'Staple food crop']
-        },
-        {
-            name: 'Wheat',
-            idealPH: [6.0, 7.5],
-            idealMoisture: [40, 50],
-            idealTemperature: [15, 25],
-            nitrogenTolerance: 'high',
-            phosphorusTolerance: 'medium',
-            potassiumTolerance: 'medium',
-            waterRequirement: 'medium',
-            description: 'Wheat prefers well-drained soil and moderate temperatures. It\'s a major cereal crop.',
-            yield: 'High',
-            season: 'Rabi (Winter)',
-            benefits: ['High yield', 'Good for dry conditions', 'Essential food grain']
-        },
-        {
-            name: 'Maize',
-            idealPH: [5.8, 7.0],
-            idealMoisture: [45, 55],
-            idealTemperature: [20, 30],
-            nitrogenTolerance: 'high',
-            phosphorusTolerance: 'high',
-            potassiumTolerance: 'high',
-            waterRequirement: 'medium',
-            description: 'Maize is a versatile crop that can be grown in various soil types and is used for food, feed, and industrial purposes.',
-            yield: 'Very High',
-            season: 'Kharif/Rabi',
-            benefits: ['Very high yield', 'Multiple uses', 'Quick maturing']
-        },
-        {
-            name: 'Cotton',
-            idealPH: [6.0, 7.5],
-            idealMoisture: [40, 50],
-            idealTemperature: [25, 35],
-            nitrogenTolerance: 'medium',
-            phosphorusTolerance: 'medium',
-            potassiumTolerance: 'high',
-            waterRequirement: 'medium',
-            description: 'Cotton requires warm temperatures and well-drained soil. It\'s a major cash crop.',
-            yield: 'Medium-High',
-            season: 'Kharif',
-            benefits: ['High value cash crop', 'Good for arid regions', 'Long staple fiber']
-        },
-        {
-            name: 'Sugarcane',
-            idealPH: [6.0, 7.5],
-            idealMoisture: [50, 60],
-            idealTemperature: [25, 35],
-            nitrogenTolerance: 'high',
-            phosphorusTolerance: 'medium',
-            potassiumTolerance: 'very_high',
-            waterRequirement: 'high',
-            description: 'Sugarcane thrives in warm, humid conditions and requires high potassium for sugar production.',
-            yield: 'Very High',
-            season: 'Annual/Perennial',
-            benefits: ['Highest sugar yield', 'Long growing season', 'High economic value']
-        },
-        {
-            name: 'Tomatoes',
-            idealPH: [6.0, 6.8],
-            idealMoisture: [50, 60],
-            idealTemperature: [20, 25],
-            nitrogenTolerance: 'medium',
-            phosphorusTolerance: 'high',
-            potassiumTolerance: 'high',
-            waterRequirement: 'medium',
-            description: 'Tomatoes prefer slightly acidic soil and consistent moisture. They\'re highly nutritious.',
-            yield: 'High',
-            season: 'Year-round',
-            benefits: ['High nutritional value', 'Good market price', 'Multiple varieties']
-        },
-        {
-            name: 'Potatoes',
-            idealPH: [5.0, 6.5],
-            idealMoisture: [60, 70],
-            idealTemperature: [15, 20],
-            nitrogenTolerance: 'high',
-            phosphorusTolerance: 'high',
-            potassiumTolerance: 'medium',
-            waterRequirement: 'high',
-            description: 'Potatoes grow best in loose, well-drained soil with high organic matter content.',
-            yield: 'Very High',
-            season: 'Rabi',
-            benefits: ['High yield per acre', 'Staple food', 'Good storage life']
-        },
-        {
-            name: 'Soybean',
-            idealPH: [6.0, 7.0],
-            idealMoisture: [45, 55],
-            idealTemperature: [20, 30],
-            nitrogenTolerance: 'medium',
-            phosphorusTolerance: 'high',
-            potassiumTolerance: 'medium',
-            waterRequirement: 'medium',
-            description: 'Soybean is a legume that fixes nitrogen and can improve soil fertility.',
-            yield: 'High',
-            season: 'Kharif',
-            benefits: ['Nitrogen fixer', 'High protein content', 'Oil extraction']
-        },
-        {
-            name: 'Groundnuts',
-            idealPH: [6.0, 7.0],
-            idealMoisture: [40, 50],
-            idealTemperature: [25, 35],
-            nitrogenTolerance: 'medium',
-            phosphorusTolerance: 'high',
-            potassiumTolerance: 'medium',
-            waterRequirement: 'low',
-            description: 'Groundnuts prefer sandy loam soil and can tolerate drought conditions.',
-            yield: 'High',
-            season: 'Kharif',
-            benefits: ['Drought tolerant', 'High oil content', 'Good for sandy soils']
-        },
-        {
-            name: 'Chickpeas',
-            idealPH: [6.0, 8.0],
-            idealMoisture: [30, 40],
-            idealTemperature: [15, 25],
-            nitrogenTolerance: 'medium',
-            phosphorusTolerance: 'high',
-            potassiumTolerance: 'medium',
-            waterRequirement: 'low',
-            description: 'Chickpeas are drought-tolerant legumes that can grow in poor soil conditions.',
-            yield: 'Medium',
-            season: 'Rabi',
-            benefits: ['Drought tolerant', 'Nitrogen fixer', 'Protein rich']
-        }
-    ];
-
-    // Calculate suitability score for each crop
-    crops.forEach(crop => {
-        let score = 100;
-        let reasons = [];
-
-        // pH suitability
-        if (soilData.ph < crop.idealPH[0]) {
-            score -= Math.min(Math.abs(soilData.ph - crop.idealPH[0]) * 5, 20);
-            reasons.push('pH too low');
-        } else if (soilData.ph > crop.idealPH[1]) {
-            score -= Math.min(Math.abs(soilData.ph - crop.idealPH[1]) * 5, 20);
-            reasons.push('pH too high');
-        } else {
-            reasons.push('Optimal pH');
-        }
-
-        // Temperature suitability
-        if (soilData.temperature < crop.idealTemperature[0]) {
-            score -= Math.min(Math.abs(soilData.temperature - crop.idealTemperature[0]) * 2, 15);
-            reasons.push('Temperature too low');
-        } else if (soilData.temperature > crop.idealTemperature[1]) {
-            score -= Math.min(Math.abs(soilData.temperature - crop.idealTemperature[1]) * 2, 15);
-            reasons.push('Temperature too high');
-        } else {
-            reasons.push('Optimal temperature');
-        }
-
-        // Moisture suitability
-        if (soilData.moisture < crop.idealMoisture[0]) {
-            score -= Math.min(Math.abs(soilData.moisture - crop.idealMoisture[0]) * 1.5, 12);
-            reasons.push('Moisture too low');
-        } else if (soilData.moisture > crop.idealMoisture[1]) {
-            score -= Math.min(Math.abs(soilData.moisture - crop.idealMoisture[1]) * 1.5, 12);
-            reasons.push('Moisture too high');
-        } else {
-            reasons.push('Optimal moisture');
-        }
-
-        // Nutrient requirements matching
-        const nutrientFactors = {
-            nitrogen: { low: 0.8, optimal: 1.0, high: 0.9 },
-            phosphorus: { low: 0.8, optimal: 1.0, high: 0.9 },
-            potassium: { low: 0.8, optimal: 1.0, high: 0.9 }
-        };
-
-        ['nitrogen', 'phosphorus', 'potassium'].forEach(nutrient => {
-            const factor = nutrientFactors[nutrient][analysis[nutrient].status] || 1.0;
-            score *= factor;
-        });
-
-        // Special considerations
-        if (crop.waterRequirement === 'high' && analysis.moisture.status === 'low') {
-            score -= 10;
-        }
-        if (crop.waterRequirement === 'low' && analysis.moisture.status === 'high') {
-            score -= 8;
-        }
-
-        // Ensure score doesn't go below 0
-        score = Math.max(0, Math.min(100, score));
-
-        suggestions.push({
-            ...crop,
-            suitabilityScore: Math.round(score),
-            suitabilityLevel: score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Poor',
-            reasons: reasons
-        });
-    });
-
-    // Sort by suitability score (highest first)
-    suggestions.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
-
-    return suggestions;
-}
 
 /* ========================================
    UI UPDATES
@@ -746,9 +566,14 @@ function generateCropSuggestions(soilData, analysis) {
 /**
  * Update the dashboard with latest soil data
  */
-function updateDashboardUI() {
-    const latestData = getLatestSoilData();
-    if (!latestData) return;
+async function updateDashboardUI() {
+    const latestData = await getLatestSoilData();
+    if (!latestData) {
+        console.log('updateDashboardUI: No soil data found');
+        return;
+    }
+
+    console.log('updateDashboardUI: Updating with', latestData);
 
     // Update NPK values
     const elements = {
@@ -803,179 +628,13 @@ function updateDashboardUI() {
     }
 }
 
-/**
- * Update crops page UI with crop suggestions
- */
-function updateCropsPageUI() {
-    const latestData = getLatestSoilData();
-    const container = document.getElementById('cropSuggestionsContainer');
-    if (!container) return;
 
-    if (!latestData) {
-        container.innerHTML = `
-            <div class="info-section" style="text-align: center; padding: 3rem;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">🌽</div>
-                <p style="color: var(--secondary-color);">Enter your soil parameters above to get personalized crop recommendations.</p>
-            </div>
-        `;
-        return;
-    }
-
-    const analysis = analyzeSoilData(latestData);
-    const cropSuggestions = generateCropSuggestions(latestData, analysis.analysis);
-
-
-    let html = `
-        <!-- Soil Analysis Summary -->
-        <div class="info-section" style="margin-bottom: 3rem; background: linear-gradient(135deg, #ffffff 0%, #F9FAFC 100%); border-radius: 24px; padding: 2.5rem; box-shadow: 0 12px 40px rgba(0,0,0,0.06); border: 1px solid #E0E5F2; position: relative; overflow: hidden;">
-            <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; background: radial-gradient(circle, rgba(5, 205, 153, 0.05) 0%, transparent 70%); border-radius: 0 0 0 100px;"></div>
-
-            <div style="position: relative; z-index: 1;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.75rem;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                    </svg>
-                    <h3 class="info-title" style="color: var(--primary-color); font-weight: 700; font-size: 1.4rem; margin: 0;">Soil Analysis Results</h3>
-                </div>
-
-                <div style="display: flex; align-items: flex-start; gap: 1.75rem; flex-wrap: wrap;">
-                    <div style="width: 88px; height: 88px; background: linear-gradient(135deg, ${analysis.overallStatus.status === 'excellent' ? 'rgba(5, 205, 153, 0.1)' : analysis.overallStatus.status === 'good' ? 'rgba(5, 205, 153, 0.1)' : analysis.overallStatus.status === 'fair' ? 'rgba(255, 153, 72, 0.1)' : 'rgba(227, 26, 26, 0.1)'}; border-radius: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
-                        <span style="font-size: 2.5rem;">${analysis.overallStatus.status === 'excellent' ? '🌟' : analysis.overallStatus.status === 'good' ? '✅' : analysis.overallStatus.status === 'fair' ? '⚠️' : '🚨'}</span>
-                    </div>
-                    <div style="flex: 1; min-width: 250px;">
-                        <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: ${analysis.overallStatus.status === 'excellent' ? 'rgba(5, 205, 153, 0.1)' : analysis.overallStatus.status === 'good' ? 'rgba(5, 205, 153, 0.1)' : analysis.overallStatus.status === 'fair' ? 'rgba(255, 153, 72, 0.1)' : 'rgba(227, 26, 26, 0.1)'}; border-radius: 8px; margin-bottom: 1rem;">
-                            <span style="font-size: 0.85rem; font-weight: 600; color: ${analysis.overallStatus.status === 'excellent' ? 'var(--accent-green)' : analysis.overallStatus.status === 'good' ? 'var(--accent-green)' : analysis.overallStatus.status === 'fair' ? 'var(--accent-orange)' : 'var(--accent-red)'}; text-transform: uppercase; letter-spacing: 0.5px;">${analysis.overallStatus.status} Soil Health</span>
-                        </div>
-                        <h4 style="color: var(--primary-color); font-size: 1.4rem; font-weight: 700; margin: 0 0 0.75rem 0; line-height: 1.3;">
-                            Crop Recommendations Based on Your Soil
-                        </h4>
-                        <p style="color: #52665A; font-size: 1rem; line-height: 1.7; margin: 0;">
-                            Based on your soil analysis (pH: ${latestData.ph}, N: ${latestData.nitrogen} mg/kg, P: ${latestData.phosphorus} mg/kg, K: ${latestData.potassium} mg/kg),
-                            here are the most suitable crops for your conditions.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <h2 class="section-title">Recommended Crops</h2>
-        <p style="color: var(--secondary-color); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6;">Crops are ranked by their suitability to your soil conditions. Higher scores indicate better matches.</p>
-    `;
-
-    // Display top crop suggestions
-    const topSuggestions = cropSuggestions.slice(0, 6); // Show top 6 crops
-
-    html += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">`;
-
-    topSuggestions.forEach((crop, index) => {
-        const suitabilityColor = crop.suitabilityLevel === 'Excellent' ? '#05CD99' :
-            crop.suitabilityLevel === 'Good' ? '#05CD99' :
-                crop.suitabilityLevel === 'Fair' ? '#FF9948' : '#E31A1A';
-
-        const bgColor = crop.suitabilityLevel === 'Excellent' ? 'rgba(5, 205, 153, 0.05)' :
-            crop.suitabilityLevel === 'Good' ? 'rgba(5, 205, 153, 0.05)' :
-                crop.suitabilityLevel === 'Fair' ? 'rgba(255, 153, 72, 0.05)' : 'rgba(227, 26, 26, 0.05)';
-
-        html += `
-            <div class="recommendation-card" style="border-left: 5px solid ${suitabilityColor}; background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); margin-bottom: 1.5rem; position: relative; overflow: hidden; transition: all 0.3s ease;">
-                <!-- Decorative accent -->
-                <div style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: ${bgColor}; border-radius: 0 20px 0 50px;"></div>
-
-                <div style="position: relative; z-index: 1;">
-                    <div class="rec-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 48px; height: 48px; background: ${bgColor}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <span style="font-size: 1.5rem;">${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🌱'}</span>
-                            </div>
-                            <div>
-                                <h3 class="rec-title" style="font-weight: 700; color: var(--primary-color); font-size: 1.3rem; margin: 0 0 0.25rem 0; line-height: 1.3;">${crop.name}</h3>
-                                <span class="rec-badge" style="background: ${bgColor}; color: ${suitabilityColor}; padding: 4px 12px; border-radius: 99px; font-weight: 600; font-size: 0.8rem;">${crop.suitabilityLevel} Match</span>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 1.5rem; font-weight: 800; color: ${suitabilityColor}; line-height: 1;">${crop.suitabilityScore}%</div>
-                            <div style="font-size: 0.75rem; color: var(--secondary-color); font-weight: 600;">Suitability</div>
-                        </div>
-                    </div>
-
-                    <p class="rec-reason" style="color: #52665A; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.25rem;">${crop.description}</p>
-
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.25rem;">
-                        <div style="background: #F9FAFC; padding: 0.75rem; border-radius: 8px;">
-                            <div style="font-size: 0.75rem; color: #a3aed0; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">Best Season</div>
-                            <div style="font-size: 0.85rem; color: var(--primary-color); font-weight: 600;">${crop.season}</div>
-                        </div>
-                        <div style="background: #F9FAFC; padding: 0.75rem; border-radius: 8px;">
-                            <div style="font-size: 0.75rem; color: #a3aed0; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">Yield Potential</div>
-                            <div style="font-size: 0.85rem; color: var(--primary-color); font-weight: 600;">${crop.yield}</div>
-                        </div>
-                    </div>
-
-                    <div style="background: rgba(5, 205, 153, 0.05); padding: 1rem; border-radius: 12px; border-left: 3px solid var(--accent-green); margin-bottom: 1rem;">
-                        <div style="font-size: 0.8rem; color: var(--secondary-color); font-weight: 600; margin-bottom: 0.5rem;">Why ${crop.name}?</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            ${crop.benefits.map(benefit => `<span style="background: rgba(5, 205, 153, 0.1); color: var(--accent-green); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 500;">${benefit}</span>`).join('')}
-                        </div>
-                    </div>
-
-                    <div style="font-size: 0.8rem; color: #707EAE; line-height: 1.4;">
-                        <strong>Ideal Conditions:</strong> pH ${crop.idealPH[0]}-${crop.idealPH[1]}, Moisture ${crop.idealMoisture[0]}-${crop.idealMoisture[1]}%, Temp ${crop.idealTemperature[0]}-${crop.idealTemperature[1]}°C
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    html += `</div>`;
-
-    // Add educational section
-    html += `
-        <div class="info-section" style="margin-top: 3rem; background: #F9FAFC; border-radius: 24px; padding: 2.5rem; border: 1px solid #E0E5F2;">
-            <h3 class="info-title" style="margin-bottom: 2rem; color: var(--primary-color); font-weight: 700; display: flex; align-items: center; gap: 0.75rem;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-                Understanding Your Crop Recommendations
-            </h3>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
-                <div>
-                    <h5 style="color: var(--accent-green); font-weight: 700; margin-bottom: 0.75rem;">🌱 Soil pH Impact</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        pH affects nutrient availability. Most crops prefer slightly acidic to neutral soil (pH 6.0-7.5) where nutrients are most accessible to plant roots.
-                    </p>
-                </div>
-                <div>
-                    <h5 style="color: var(--accent-blue); font-weight: 700; margin-bottom: 0.75rem;">💧 Moisture Requirements</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Different crops have varying water needs. Rice loves wet conditions while chickpeas tolerate drought. Proper irrigation is crucial for success.
-                    </p>
-                </div>
-                <div>
-                    <h5 style="color: var(--accent-purple); font-weight: 700; margin-bottom: 0.75rem;">🌡️ Temperature Ranges</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Each crop has optimal temperature ranges for growth. Some crops like potatoes prefer cooler conditions while cotton needs heat.
-                    </p>
-                </div>
-                <div>
-                    <h5 style="color: var(--accent-orange); font-weight: 700; margin-bottom: 0.75rem;">🧪 Nutrient Matching</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Crops have different nutrient requirements. Heavy feeders like maize need more fertilizer than legumes that fix their own nitrogen.
-                    </p>
-                </div>
-            </div>
-        </div>
-    `;
-
-    container.innerHTML = html;
-}
 
 /**
  * Update recommendation page UI
  */
-function updateRecommendationPageUI() {
-    const latestData = getLatestSoilData();
+async function updateRecommendationPageUI() {
+    const latestData = await getLatestSoilData();
     const container = document.getElementById('recommendationsList');
     if (!container) return;
 
@@ -1242,11 +901,11 @@ function updateRecommendationPageUI() {
 /**
  * Update history page UI
  */
-function updateHistoryUI() {
+async function updateHistoryUI() {
     const container = document.getElementById('history-container');
     if (!container) return;
 
-    const history = getSoilHistory();
+    const history = await getSoilHistory();
     const clearBtn = document.getElementById('clearHistoryBtn');
 
     if (history.length === 0) {
@@ -1291,7 +950,7 @@ function updateHistoryUI() {
                         </div>
                         <h4 style="color: var(--primary-color); font-size: 1.15rem; font-weight: 800;">Analysis for ${record.crop}</h4>
                     </div>
-                    <button class="btn-icon danger" onclick="deleteHistoryItem(${index})" title="Delete Record" style="background: rgba(238, 93, 114, 0.1); color: var(--accent-red); width: 36px; height: 36px; border-radius: 10px;">
+                    <button class="btn-icon danger" onclick="deleteHistoryItem('${record.id}')" title="Delete Record" style="background: rgba(238, 93, 114, 0.1); color: var(--accent-red); width: 36px; height: 36px; border-radius: 10px;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1339,11 +998,11 @@ function updateHistoryUI() {
 /**
  * Update alerts page UI
  */
-function updateAlertsPageUI() {
+async function updateAlertsPageUI() {
     const container = document.getElementById('alertsContainer');
     if (!container) return;
 
-    const latestData = getLatestSoilData();
+    const latestData = await getLatestSoilData();
     if (!latestData) {
         container.innerHTML = `
             <div class="empty-state" style="min-height: 400px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
@@ -1416,107 +1075,65 @@ function updateAlertsPageUI() {
 /**
  * Confirm and clear all history
  */
-function confirmClearHistory() {
+async function confirmClearHistory() {
     if (confirm('Are you sure you want to clear your entire analysis history? This cannot be undone.')) {
-        clearSoilData();
-        updateHistoryUI();
+        await clearSoilData();
+        await updateHistoryUI();
         showMessage('History cleared successfully', 'success');
     }
 }
 
 /**
- * Delete a single history item
+ * Delete a single history item from Firestore
  */
-function deleteHistoryItem(index) {
-    const history = getSoilHistory();
-    if (index >= 0 && index < history.length) {
-        history.splice(index, 1);
-        localStorage.setItem('nutriroot_soil_history', JSON.stringify(history));
+async function deleteHistoryItem(id) {
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
 
-        // If we deleted the latest one, update latest_soil_data too
-        if (index === history.length) { // history.length is now 1 less
-            const newLatest = history.length > 0 ? history[history.length - 1] : null;
-            if (newLatest) {
-                localStorage.setItem('nutriroot_latest_soil_data', JSON.stringify(newLatest));
-            } else {
-                localStorage.removeItem('nutriroot_latest_soil_data');
+        await db.collection('soilData').doc(user.uid).collection('readings').doc(id).delete();
+
+        // Check if we need to update LocalStorage (if we deleted the latest)
+        const history = await getSoilHistory();
+        const latestInStorage = getLatestSoilData();
+
+        if (history.length > 0) {
+            // Check if deleted item was the cached one (approximate by timestamp if needed, but here we just cache first in history)
+            if (latestInStorage && history[0].timestamp !== latestInStorage.timestamp) {
+                localStorage.setItem('nutriroot_latest_soil_data', JSON.stringify(history[0]));
+            }
+        } else {
+            localStorage.removeItem('nutriroot_latest_soil_data');
+        }
+
+        await updateHistoryUI();
+        showMessage('Record deleted from cloud', 'success');
+    } catch (error) {
+        console.error('Error deleting record:', error);
+        showMessage('Error deleting record', 'error');
+    }
+}
+
+// Automatically update UI on relevant pages - Wait for Auth to be ready
+document.addEventListener('DOMContentLoaded', () => {
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            if (document.getElementById('nitrogenValue')) {
+                await updateDashboardUI();
+            }
+            if (document.getElementById('recommendationsList')) {
+                await updateRecommendationPageUI();
+            }
+            if (document.getElementById('history-container')) {
+                await updateHistoryUI();
+            }
+            if (document.getElementById('alertsContainer')) {
+                await updateAlertsPageUI();
             }
         }
-
-        updateHistoryUI();
-        showMessage('Record deleted', 'success');
-    }
-}
-
-// Automatically update UI on relevant pages
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('nitrogenValue')) {
-        updateDashboardUI();
-    }
-    if (document.getElementById('recommendationsList')) {
-        updateRecommendationPageUI();
-    }
-    // Check if on crops page
-    const suggestionsContainer = document.getElementById('cropSuggestionsContainer');
-    if (suggestionsContainer) {
-        updateCropsPageUI();
-        // Add event listener for crops form
-        const cropsForm = document.getElementById('cropsSoilForm');
-        if (cropsForm) {
-            // Remove any existing listener to be safe
-            cropsForm.removeEventListener('submit', handleCropsSoilSubmit);
-            cropsForm.addEventListener('submit', handleCropsSoilSubmit);
-            console.log('Crops form event listener added');
-        }
-    }
-    if (document.getElementById('history-container')) {
-        updateHistoryUI();
-    }
-    if (document.getElementById('alertsContainer')) {
-        updateAlertsPageUI();
-    }
+    });
 });
 
-/**
- * Handle crop suggestions form submission
- */
-function handleCropsSoilSubmit(e) {
-    e.preventDefault();
-    console.log('Handling crops form submission');
 
-    // Get values and convert to numbers where appropriate
-    const data = {
-        nitrogen: parseFloat(document.getElementById('crops_nitrogen').value),
-        phosphorus: parseFloat(document.getElementById('crops_phosphorus').value),
-        potassium: parseFloat(document.getElementById('crops_potassium').value),
-        ph: parseFloat(document.getElementById('crops_ph').value),
-        moisture: parseFloat(document.getElementById('crops_moisture').value),
-        temperature: parseFloat(document.getElementById('crops_temperature').value),
-        crop: 'General' // Default for suggestions
-    };
-
-    console.log('Processed data:', data);
-
-    if (saveSoilData(data)) {
-        updateCropsPageUI();
-
-        // Show success state
-        const check = document.getElementById('successCheck');
-        if (check) {
-            check.classList.add('active');
-            setTimeout(() => {
-                check.classList.remove('active');
-            }, 1500);
-        }
-
-        showMessage('Soil data analyzed! Crop suggestions generated.', 'success');
-
-        // Scroll to results
-        const container = document.getElementById('cropSuggestionsContainer');
-        if (container) {
-            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-}
 
 // End of script

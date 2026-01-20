@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Crops - NutriRoot Admin</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+
+    <!-- Firebase SDK (v9 compatibility) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <a href="admin.html" class="navbar-brand">
+            <img src="assets/images/logo.png" alt="NutriRoot Logo" width="24" height="24">
+            NutriRoot Admin
+        </a>
+
+        <div class="user-profile">
+            <button class="btn-icon" onclick="toggleProfileMenu()" id="profileBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+
+            <div id="profileMenu" class="dropdown-menu">
+                <div class="dropdown-header">
+                    <span class="user-name" id="adminUserName">Admin</span>
+                    <span class="user-email" id="adminUserEmail">admin@example.com</span>
+                </div>
+                <a href="dashboard.html" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    User Dashboard
+                </a>
+                <div style="border-top: 1px solid #F4F7FE; margin: 0.5rem 0;"></div>
+                <a href="#" onclick="signOut()" class="dropdown-item danger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sign Out
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="admin-sidebar-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                Admin Panel
+            </div>
+        </div>
+        <nav class="admin-nav-links">
+            <a href="admin.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Overview
+            </a>
+            <a href="admin-users.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                Users
+            </a>
+            <a href="admin-crops.html" class="admin-nav-link active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                Crops
+            </a>
+            <a href="admin-analytics.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Analytics
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main-content">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="page-title">Crop Database</h1>
+                <p class="page-subtitle">Manage crop requirements and recommendations</p>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openAddCropModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add New Crop
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon green">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <div class="admin-stat-content">
+                    <h3 id="statTotalCrops">...</h3>
+                    <p>Total Crops</p>
+                </div>
+            </div>
+
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <div class="admin-stat-content">
+                    <h3 id="statCategories">...</h3>
+                    <p>Active Categories</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crops Table Section -->
+        <div class="admin-table-container">
+            <div class="admin-table-header">
+                <h2 class="admin-table-title">Crop Catalog</h2>
+                <div class="admin-search-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="cropSearchInput" placeholder="Search crops..." oninput="handleCropSearch()">
+                </div>
+                <select id="categoryFilter" class="admin-form-select" style="width: 200px; margin-left: 1rem;"
+                    onchange="handleCropFilter()">
+                    <option value="all">All Categories</option>
+                    <option value="vegetable">Vegetables</option>
+                    <option value="fruit">Fruits</option>
+                    <option value="grain">Grains</option>
+                    <option value="spice">Spices</option>
+                </select>
+            </div>
+
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Crop Name</th>
+                        <th>Category</th>
+                        <th>pH Range</th>
+                        <th>Nitrogen (N)</th>
+                        <th>Phosphorus (P)</th>
+                        <th>Potassium (K)</th>
+                        <th>Moisture</th>
+                        <th>Temperature</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="cropsTableBody">
+                    <!-- Populated via admin-crops.js -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Add/Edit Crop Modal -->
+    <div id="cropModal" class="modal-overlay">
+        <div class="modal-card wide">
+            <header class="modal-header">
+                <h2 id="modalTitle">Add New Crop</h2>
+                <button onclick="closeCropModal()" class="btn-close">&times;</button>
+            </header>
+
+            <form id="cropForm" onsubmit="handleCropFormSubmit(event)">
+                <input type="hidden" id="editCropId">
+                <div class="form-grid">
+                    <!-- Basic Info -->
+                    <div class="form-section">
+                        <h3>Basic Information</h3>
+                        <div class="form-group">
+                            <label for="cropName">Crop Name</label>
+                            <input type="text" id="cropName" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cropCategory">Category</label>
+                            <select id="cropCategory" class="form-input" required>
+                                <option value="vegetable">Vegetable</option>
+                                <option value="fruit">Fruit</option>
+                                <option value="grain">Grain</option>
+                                <option value="spice">Spice</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Soil Requirements -->
+                    <div class="form-section">
+                        <h3>Soil Requirements</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="phMin">pH Min</label>
+                                <input type="number" id="phMin" class="form-input" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phMax">pH Max</label>
+                                <input type="number" id="phMax" class="form-input" step="0.1" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nMin">Nitrogen Min</label>
+                                <input type="number" id="nMin" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="nMax">Nitrogen Max</label>
+                                <input type="number" id="nMax" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pMin">Phosphorus Min</label>
+                                <input type="number" id="pMin" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="pMax">Phosphorus Max</label>
+                                <input type="number" id="pMax" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="kMin">Potassium Min</label>
+                                <input type="number" id="kMin" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="kMax">Potassium Max</label>
+                                <input type="number" id="kMax" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Environment -->
+                    <div class="form-section">
+                        <h3>Environmental Conditions</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="moistureMin">Moisture Min (%)</label>
+                                <input type="number" id="moistureMin" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="moistureMax">Moisture Max (%)</label>
+                                <input type="number" id="moistureMax" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tempMin">Temp Min (°C)</label>
+                                <input type="number" id="tempMin" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tempMax">Temp Max (°C)</label>
+                                <input type="number" id="tempMax" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="modal-footer">
+                    <button type="button" class="btn-action outline" onclick="closeCropModal()">Cancel</button>
+                    <button type="submit" class="btn-action primary">Save Crop</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-card small">
+            <div class="modal-confirm-content">
+                <div class="confirm-icon danger">!</div>
+                <h2>Delete Crop?</h2>
+                <p>Are you sure you want to remove <strong id="deleteCropName">this crop</strong>? This action cannot be
+                    undone.</p>
+                <div class="confirm-actions">
+                    <button class="btn-action outline" onclick="closeDeleteModal()">Cancel</button>
+                    <button class="btn-action danger" id="confirmDeleteBtn">Delete Crop</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/admin-auth.js"></script>
+    <script src="js/admin-crops.js"></script>
+</body>
+
+</html>

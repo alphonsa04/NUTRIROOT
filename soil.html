@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/admin-auth.js"></script>
     <style>
         .form-container {
             background: var(--card-bg);
@@ -262,25 +263,26 @@
 
     <script src="js/script.js"></script>
     <script>
-        function handleSoilSubmit(e) {
+        async function handleSoilSubmit(e) {
             e.preventDefault();
 
             const data = {
-                nitrogen: document.getElementById('nitrogen').value,
-                phosphorus: document.getElementById('phosphorus').value,
-                potassium: document.getElementById('potassium').value,
-                ph: document.getElementById('ph').value,
-                moisture: document.getElementById('moisture').value,
-                temperature: document.getElementById('temperature').value,
-                crop: document.getElementById('crop').value,
-                timestamp: new Date().toISOString()
+                nitrogen: parseFloat(document.getElementById('nitrogen').value),
+                phosphorus: parseFloat(document.getElementById('phosphorus').value),
+                potassium: parseFloat(document.getElementById('potassium').value),
+                ph: parseFloat(document.getElementById('ph').value),
+                moisture: parseFloat(document.getElementById('moisture').value),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                crop: document.getElementById('crop').value
             };
 
-            // Save to local storage (mock DB)
-            saveSoilData(data);
+            // Save to Firestore via script.js helper
+            const saved = await saveSoilData(data);
 
-            // Redirect to dashboard
-            window.location.href = 'dashboard.html';
+            if (saved) {
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+            }
         }
     </script>
 </body>

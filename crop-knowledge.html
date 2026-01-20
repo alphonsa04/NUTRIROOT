@@ -617,6 +617,12 @@
         <p>&copy; 2025 NutriRoot. Empowering Agriculture with Technology.</p>
     </footer>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-auth.js"></script>
     <script src="js/crop-knowledge.js"></script>
     <script>
         // Mobile Menu Toggle
@@ -641,7 +647,9 @@
 
         // Dynamic Crop Grid Logic
         document.addEventListener('DOMContentLoaded', () => {
-            populateCropsGrid();
+            loadCropData().then(() => {
+                populateCropsGrid();
+            });
         });
 
         function populateCropsGrid() {

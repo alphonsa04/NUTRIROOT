@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/admin-auth.js"></script>
 </head>
 
 <body>
@@ -357,9 +358,47 @@
         </svg>
     </div>
 
+    <!-- Debug Redirect Helper (Temporary) -->
+    <div id="adminDebugBanner"
+        style="display: none; background: #FFF4F4; border: 1px solid #FFCCCC; padding: 1.5rem; margin: 2rem; border-radius: 12px; color: #CC0000; font-family: 'DM Sans', sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h4 style="margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17.01V17" />
+            </svg>
+            Admin Access Denied
+        </h4>
+        <p id="adminDebugInfo" style="margin: 0.5rem 0;">Checking session...</p>
+        <p style="font-size: 0.85rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #FFCCCC;">
+            <b>Solution:</b> Go to Firebase Console → Firestore → 'users' collection.
+            Find the UID/Email above and ensure it has <code>role: "admin"</code> (exactly as written).
+        </p>
+    </div>
+
     <script>
-        function handleDashboardSoilSubmit(e) {
+        // Check for admin redirect errors in URL
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const adminError = params.get('admin_error');
+
+            if (adminError) {
+                const banner = document.getElementById('adminDebugBanner');
+                const info = document.getElementById('adminDebugInfo');
+
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        banner.style.display = 'block';
+                        info.innerHTML = `You are logged in as: <b>${user.email}</b><br>Role found in Database: <code>"${adminError}"</code>`;
+                        // Remove the error from URL without refreshing
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                });
+            }
+        });
+
+        async function handleDashboardSoilSubmit(e) {
             e.preventDefault();
+            console.log('Dashboard: Submit started');
             const data = {
                 nitrogen: parseFloat(document.getElementById('modal_nitrogen').value),
                 phosphorus: parseFloat(document.getElementById('modal_phosphorus').value),
@@ -370,27 +409,28 @@
                 crop: document.getElementById('modal_crop').value
             };
 
-            if (saveSoilData(data)) {
-                updateDashboardUI();
+            const saved = await saveSoilData(data);
+            if (saved) {
+                console.log('Dashboard: Save successful, updating UI');
+                await updateDashboardUI();
 
                 // Show professional success state
                 const check = document.getElementById('successCheck');
-                check.classList.add('active');
+                if (check) check.classList.add('active');
 
                 // Professional delay before redirecting to recommendations
                 setTimeout(() => {
-                    check.classList.remove('active');
+                    console.log('Dashboard: Redirecting to recommendations...');
                     window.location.href = 'recommendation.html';
-                }, 1500);
+                }, 1000);
 
-                showMessage('Soil data analyzed successfully! Redirecting...', 'success');
+                showMessage('Soil data analyzed and saved to cloud!', 'success');
+            } else {
+                console.error('Dashboard: Save failed');
+                showMessage('Failed to save data. Please check your connection.', 'error');
             }
         }
 
-        // Initialize dashboard UI
-        window.addEventListener('load', () => {
-            updateDashboardUI();
-        });
     </script>
 </body>
 

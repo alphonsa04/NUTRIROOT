@@ -388,7 +388,6 @@
         <!-- Auth Buttons -->
         <div class="nav-auth-buttons">
             <button onclick="openAuthModal('login')" class="btn-nav-login">Log In</button>
-            <button onclick="openAuthModal('register')" class="btn-nav-signup">Get Started</button>
         </div>
 
         <!-- Mobile Menu Toggle -->
@@ -707,7 +706,9 @@
 
         // Populate the grid dynamically on load
         document.addEventListener('DOMContentLoaded', () => {
-            populateCropsGridLanding();
+            loadCropData().then(() => {
+                populateCropsGridLanding();
+            });
         });
 
         function populateCropsGridLanding() {

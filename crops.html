@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/admin-auth.js"></script>
 </head>
 
 <body>
@@ -129,7 +130,8 @@
                     </div>
                     <div>
                         <h2 class="section-card-title">Enter Soil Data for Crop Recommendations</h2>
-                        <p class="section-card-subtitle">Get personalized crop suggestions based on your soil analysis</p>
+                        <p class="section-card-subtitle">Get personalized crop suggestions based on your soil analysis
+                        </p>
                     </div>
                 </div>
 
@@ -201,13 +203,42 @@
         <div id="cropSuggestionsContainer">
             <div class="info-section" style="text-align: center; padding: 3rem;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🌽</div>
-                <p style="color: var(--secondary-color);">Enter your soil parameters above to get personalized crop recommendations.</p>
+                <p style="color: var(--secondary-color);">Enter your soil parameters above to get personalized crop
+                    recommendations.</p>
             </div>
         </div>
     </div>
-    <script src="js/script.js"></script>
+    <style>
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #F4F7FE;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
 
-    <!-- Confirmation Sound / Animation Element -->
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .crop-match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1) !important;
+        }
+    </style>
+    <script src="js/script.js"></script>
+    <script src="js/suggestion_engine.js"></script>
+    <script src="js/crops_ui.js"></script>
+
+    <!-- Confirmation Sound / Animation Element (Optional, kept for script compatibility) -->
     <div id="successCheck" class="success-check">
         <svg viewBox="0 0 52 52">
             <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
