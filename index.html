@@ -352,28 +352,65 @@
                 font-size: 2rem;
             }
         }
+
+        /* Custom NUTRIROOT Logo Text Styling */
+        .nutriroot-logo-text {
+            display: flex;
+            align-items: center;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 800;
+            font-size: 2rem;
+            letter-spacing: 0.05em;
+            color: #fdfafa;
+            position: relative;
+            height: 60px;
+        }
+
+        .logo-part {
+            display: inline-block;
+            line-height: 1;
+        }
+
+        .logo-plant-container {
+            display: inline-block;
+            position: relative;
+            width: 40px;
+            height: 60px;
+            margin: 0 -5px;
+        }
+
+        .logo-i {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            z-index: 1;
+        }
+
+        /* Navbar scrolled state */
+        .navbar-scrolled .nutriroot-logo-text,
+        .navbar-scrolled .logo-i {
+            color: #1a1a1a;
+        }
     </style>
 </head>
 
 <body>
     <!-- Navigation -->
     <nav class="navbar landing-nav">
-        <a href="index.html" class="navbar-brand">
-            <!-- Professional SVG Logo: Leaf with Digital Nodes -->
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Leaf Shape -->
-                <path d="M20 38C20 38 8 30 8 16C8 9.37258 13.3726 4 20 4C26.6274 4 32 9.37258 32 16C32 30 20 38 20 38Z"
-                    fill="#1A3C25" />
-                <!-- Circuit Combined -->
-                <path d="M20 38V22M20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16" stroke="#05CD99"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                <circle cx="20" cy="18" r="2" fill="#05CD99" />
-                <circle cx="20" cy="10" r="1.5" fill="#05CD99" />
-                <path d="M20 18V10" stroke="#05CD99" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-            <div class="brand-text-container">
-                <span class="brand-text">NutriRoot</span>
-                <span class="brand-tagline">Smart Agriculture</span>
+        <a href="index.html" class="navbar-brand"
+            style="position: relative; display: flex; align-items: center; gap: 0; margin-top: 8px;">
+            <div class="nutriroot-logo-text">
+                <span class="logo-part">NUTR</span>
+                <span class="logo-plant-container"
+                    style="display: inline-block; width: 45px; height: 60px; position: relative;">
+                    <img src="assets/images/tree-logo.png" alt="Tree"
+                        style="height: 85px; width: auto; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); z-index: 2;">
+                </span>
+                <span class="logo-part">ROOT</span>
             </div>
         </a>
 
@@ -410,7 +447,7 @@
 
         <div class="hero-container">
             <div class="hero-text-content">
-                <h1 class="hero-title">Smart Soil Monitoring <br> for<br>Sustainable Agriculture</h1>
+                <h1 class="hero-title">Empowering Agriculture Through Smart Soil Monitoring</h1>
                 <p class="hero-subtitle">
                     Real-time IoT soil analysis, intelligent fertilizer recommendations, and precision agriculture
                     insights.
@@ -606,12 +643,90 @@
         </div>
     </div>
 
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact">
+        <div class="contact-content-centered">
+            <h2 class="contact-title">Contact Us</h2>
+
+            <!-- Contact Info Pills -->
+            <div class="contact-info-pills">
+                <a href="tel:+15551234567" class="contact-pill">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                        </path>
+                    </svg>
+                    +1 (555) 123-4567
+                </a>
+
+                <a href="mailto:support@nutriroot.com" class="contact-pill">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    support@nutriroot.com
+                </a>
+
+                <div class="contact-pill">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    123 Agriculture Lane, Green Valley, CA
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <form id="contactForm" class="contact-form-minimal">
+                <div class="form-row-minimal">
+                    <input type="text" id="contactName" name="name" placeholder="Your Name" required>
+                    <input type="email" id="contactEmail" name="email" placeholder="Your Email" required>
+                </div>
+
+                <input type="text" id="contactSubject" name="subject" placeholder="Subject" required>
+
+                <textarea id="contactMessage" name="message" rows="5" placeholder="Your Message" required></textarea>
+
+                <button type="submit" class="btn-contact-minimal">Send Message</button>
+            </form>
+
+            <!-- Success/Error Messages -->
+            <div id="contactSuccessMessage" class="contact-message-minimal success-message-minimal"
+                style="display: none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Thank you! Your message has been sent successfully.
+            </div>
+            <div id="contactErrorMessage" class="contact-message-minimal error-message-minimal" style="display: none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                Oops! Something went wrong. Please try again.
+            </div>
+        </div>
+    </section>
+
+
     <!-- Footer -->
-    <footer class="landing-footer" id="contact">
+    <footer class="landing-footer">
         <p>&copy; 2025 NutriRoot. Empowering Agriculture with Technology.</p>
     </footer>
 
     <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
+        });
+
         // Mobile Menu Toggle
         function toggleMobileMenu() {
             const navMenu = document.querySelector('.nav-menu');
@@ -635,21 +750,27 @@
         // Smooth scrolling and active link highlighting
         document.querySelectorAll('.nav-menu-link').forEach(link => {
             link.addEventListener('click', function (e) {
-                e.preventDefault();
+                const href = this.getAttribute('href');
 
-                // Remove active class from all links
-                document.querySelectorAll('.nav-menu-link').forEach(l => l.classList.remove('active'));
+                // Only prevent default and smooth scroll if it's an internal # anchor
+                if (href.startsWith('#')) {
+                    e.preventDefault();
 
-                // Add active class to clicked link
-                this.classList.add('active');
+                    // Remove active class from all links
+                    document.querySelectorAll('.nav-menu-link').forEach(l => l.classList.remove('active'));
 
-                // Get target section
-                const targetId = this.getAttribute('href').substring(1);
-                const targetSection = document.getElementById(targetId);
+                    // Add active class to clicked link
+                    this.classList.add('active');
 
-                if (targetSection) {
-                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                    // Get target section
+                    const targetId = href.substring(1);
+                    const targetSection = document.getElementById(targetId);
+
+                    if (targetSection) {
+                        targetSection.scrollIntoView({ behavior: 'smooth' });
+                    }
                 }
+                // Otherwise (like crop-knowledge.html), let the default navigation happen
             });
         });
 
@@ -913,6 +1034,45 @@
             // Scroll to crops section smoothly
             document.getElementById('crops').scrollIntoView({ behavior: 'smooth' });
         }
+
+        // Contact Form Handling
+        document.getElementById('contactForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Get form values
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const subject = document.getElementById('contactSubject').value;
+            const message = document.getElementById('contactMessage').value;
+
+            // Hide any existing messages
+            document.getElementById('contactSuccessMessage').style.display = 'none';
+            document.getElementById('contactErrorMessage').style.display = 'none';
+
+            // Simulate form submission (in a real app, this would be an API call)
+            // For now, we'll just show a success message
+            setTimeout(() => {
+                // Log the form data (in production, this would be sent to a server)
+                console.log('Contact Form Submission:', {
+                    name: name,
+                    email: email,
+                    subject: subject,
+                    message: message,
+                    timestamp: new Date().toISOString()
+                });
+
+                // Show success message
+                document.getElementById('contactSuccessMessage').style.display = 'inline-flex';
+
+                // Reset form
+                document.getElementById('contactForm').reset();
+
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    document.getElementById('contactSuccessMessage').style.display = 'none';
+                }, 5000);
+            }, 500);
+        });
     </script>
 </body>
 

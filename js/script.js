@@ -134,7 +134,12 @@ async function saveSoilData(data) {
         console.log('Soil data saved to Firestore history');
 
         // 2. Save to localStorage (Instant Cache for Dashboard/Recs)
-        localStorage.setItem('nutriroot_latest_soil_data', JSON.stringify(data));
+        try {
+            localStorage.setItem(`nutriroot_latest_soil_data_${user.uid}`, JSON.stringify(data));
+        } catch (storageError) {
+            console.warn('script.js: localStorage.setItem failed:', storageError);
+            // Non-critical, just won't be cached
+        }
 
         return true;
     } catch (error) {
@@ -149,16 +154,22 @@ async function saveSoilData(data) {
  */
 async function getLatestSoilData() {
     try {
-        // 1. Try Local Storage Cache
-        const cached = localStorage.getItem('nutriroot_latest_soil_data');
+        const user = auth.currentUser;
+        if (!user) return null;
+
+        // 1. Try Local Storage Cache (User-Specific)
+        let cached = null;
+        try {
+            cached = localStorage.getItem(`nutriroot_latest_soil_data_${user.uid}`);
+        } catch (storageError) {
+            console.warn('script.js: localStorage.getItem failed:', storageError);
+        }
+
         if (cached) {
             return JSON.parse(cached);
         }
 
         // 2. Fallback to Firestore Latest reading
-        const user = auth.currentUser;
-        if (!user) return null;
-
         const snapshot = await db.collection('soilData')
             .doc(user.uid)
             .collection('readings')
@@ -169,7 +180,11 @@ async function getLatestSoilData() {
         if (!snapshot.empty) {
             const data = snapshot.docs[0].data();
             // Cache it for next time
-            localStorage.setItem('nutriroot_latest_soil_data', JSON.stringify(data));
+            try {
+                localStorage.setItem(`nutriroot_latest_soil_data_${user.uid}`, JSON.stringify(data));
+            } catch (storageError) {
+                console.warn('script.js: localStorage.setItem failed (fallback):', storageError);
+            }
             return data;
         }
 
@@ -207,6 +222,22 @@ async function getSoilHistory() {
 }
 
 /**
+ * Get the total number of soil analysis records for a user
+ */
+async function getAnalysisCount(uid) {
+    try {
+        const snapshot = await db.collection('soilData')
+            .doc(uid)
+            .collection('readings')
+            .get();
+        return snapshot.size;
+    } catch (error) {
+        console.error("Error getting analysis count:", error);
+        return 0;
+    }
+}
+
+/**
  * Clear all soil data (Firestore + LocalStorage)
  */
 async function clearSoilData() {
@@ -215,7 +246,11 @@ async function clearSoilData() {
         if (!user) return;
 
         // Clear Local Cache
-        localStorage.removeItem('nutriroot_latest_soil_data');
+        try {
+            localStorage.removeItem('nutriroot_latest_soil_data');
+        } catch (storageError) {
+            console.warn('script.js: localStorage.removeItem failed:', storageError);
+        }
 
         // Clear Firestore History (batch delete)
         const snapshot = await db.collection('soilData').doc(user.uid).collection('readings').get();
@@ -525,6 +560,48 @@ function generateRecommendations(analysis, soilData) {
 }
 
 /**
+ * Feature-specific Logic (Premium)
+ */
+
+async function checkPremiumStatus(uid) {
+    try {
+        const doc = await db.collection('users').doc(uid).get();
+        return doc.exists && doc.data().isPremium === true;
+    } catch (error) {
+        console.error("Error checking premium status:", error);
+        return false;
+    }
+}
+
+async function setPremiumStatus(uid, status) {
+    try {
+        await db.collection('users').doc(uid).set({
+            isPremium: status,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        updatePremiumUI(status);
+        return true;
+    } catch (error) {
+        console.error("Error setting premium status:", error);
+        return false;
+    }
+}
+
+function updatePremiumUI(isPremium) {
+    const lockedElements = document.querySelectorAll('.premium-locked');
+    const blurredElements = document.querySelectorAll('.premium-blur');
+    const premiumBadges = document.querySelectorAll('.premium-badge');
+
+    if (isPremium) {
+        lockedElements.forEach(el => el.classList.remove('premium-locked'));
+        blurredElements.forEach(el => el.classList.remove('premium-blur'));
+        premiumBadges.forEach(el => el.style.display = 'inline-block');
+
+        // Hide lock overlays
+        document.querySelectorAll('.lock-overlay').forEach(el => el.style.display = 'none');
+    }
+}
+/**
  * Get specific recommendations and tips for a particular crop
  */
 function getCropRecommendation(crop, analysis) {
@@ -640,10 +717,10 @@ async function updateRecommendationPageUI() {
 
     if (!latestData) {
         container.innerHTML = `
-            <div class="empty-state" style="text-align: center; padding: 3rem;">
-                <span style="font-size: 3rem;">📊</span>
-                <h3 style="margin-top: 1rem; color: var(--primary-color);">No Soil Data Yet</h3>
-                <p style="color: var(--secondary-color);">Please enter your soil parameters to see recommendations.</p>
+            <div class="empty-state" style="text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 1px dashed #E0E5F2;">
+                <h3 style="color: var(--primary-color); font-weight: 700;">No Soil Data Yet</h3>
+                <p style="color: var(--secondary-color); margin-top: 0.5rem;">Please enter your soil parameters on the dashboard to see recommendations.</p>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'" style="margin-top: 2rem;">Go to Dashboard</button>
             </div>
         `;
         return;
@@ -667,7 +744,7 @@ async function updateRecommendationPageUI() {
                 
                 <div style="display: flex; align-items: flex-start; gap: 1.75rem; flex-wrap: wrap;">
                     <div style="width: 88px; height: 88px; background: linear-gradient(135deg, ${result.overallStatus.status === 'excellent' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'good' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'fair' ? 'rgba(255, 153, 72, 0.1)' : 'rgba(227, 26, 26, 0.1)'}; border-radius: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
-                        <span style="font-size: 2.5rem;">${result.overallStatus.status === 'excellent' ? '🌟' : result.overallStatus.status === 'good' ? '✅' : result.overallStatus.status === 'fair' ? '⚠️' : '🚨'}</span>
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: ${result.overallStatus.status === 'excellent' ? '#05CD99' : result.overallStatus.status === 'good' ? '#4ade80' : result.overallStatus.status === 'fair' ? '#FFAC33' : '#E31A1A'}; box-shadow: 0 0 15px ${result.overallStatus.status === 'excellent' ? '#05CD99' : result.overallStatus.status === 'good' ? '#4ade80' : result.overallStatus.status === 'fair' ? '#FFAC33' : '#E31A1A'}66;"></div>
                     </div>
                     <div style="flex: 1; min-width: 250px;">
                         <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: ${result.overallStatus.status === 'excellent' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'good' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'fair' ? 'rgba(255, 153, 72, 0.1)' : 'rgba(227, 26, 26, 0.1)'}; border-radius: 8px; margin-bottom: 1rem;">
@@ -861,27 +938,27 @@ async function updateRecommendationPageUI() {
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
                 <div>
-                    <h5 style="color: var(--accent-blue); font-weight: 700; margin-bottom: 0.75rem;">🌿 Nitrogen (Growth)</h5>
+                    <h5 style="color: var(--accent-blue); font-weight: 700; margin-bottom: 0.75rem;">Nitrogen (Growth)</h5>
                     <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Nitrogen is like food for the leaves. It makes plants stay deep green and grow tall. Without enough, plants turn yellow and stop growing.
+                        Nitrogen is essential for vegetative development. It promotes lush green foliage and vigorous stem growth.
                     </p>
                 </div>
                 <div>
-                    <h5 style="color: var(--accent-purple); font-weight: 700; margin-bottom: 0.75rem;">🌱 Phosphorus (Roots)</h5>
+                    <h5 style="color: var(--accent-purple); font-weight: 700; margin-bottom: 0.75rem;">Phosphorus (Roots)</h5>
                     <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Phosphorus is for the roots and flowers. It helps the plant establish itself early and produce healthy fruits or grains.
+                        Phosphorus supports root establishment and reproductive development, facilitating healthy flowering and fruiting.
                     </p>
                 </div>
                 <div>
-                    <h5 style="color: var(--accent-orange); font-weight: 700; margin-bottom: 0.75rem;">🍎 Potassium (Health)</h5>
+                    <h5 style="color: var(--accent-orange); font-weight: 700; margin-bottom: 0.75rem;">Potassium (Health)</h5>
                     <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Potassium acts like medicine. It helps the plant fight off diseases, survive hot weather, and makes the harvest taste better.
+                        Potassium enhances systemic resilience, improving disease resistance and metabolic efficiency under environmental stress.
                     </p>
                 </div>
                 <div>
-                    <h5 style="color: var(--accent-green); font-weight: 700; margin-bottom: 0.75rem;">🧪 Soil pH (Balance)</h5>
+                    <h5 style="color: var(--accent-green); font-weight: 700; margin-bottom: 0.75rem;">Soil pH (Balance)</h5>
                     <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        pH is the "balance" of the soil. If it's too high or low, the plant can't drink the nutrients even if you apply fertilizer.
+                        Soil pH regulates nutrient availability. Optimal balance is critical for the efficient uptake of all mineral inputs.
                     </p>
                 </div>
             </div>
@@ -912,8 +989,7 @@ async function updateHistoryUI() {
         if (clearBtn) clearBtn.style.display = 'none';
         container.innerHTML = `
             <div class="empty-state" style="text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 1px dashed #E0E5F2;">
-                <span style="font-size: 3.5rem; opacity: 0.5;">📅</span>
-                <h3 style="margin-top: 1.5rem; color: var(--primary-color); font-weight: 700;">No Analysis History</h3>
+                <h3 style="color: var(--primary-color); font-weight: 700;">No Analysis History</h3>
                 <p style="color: var(--secondary-color); margin-top: 0.5rem;">Your past soil records will appear here for tracking.</p>
                 <button class="btn btn-primary" onclick="window.location.href='dashboard.html'" style="margin-top: 2rem;">Start New Analysis</button>
             </div>
@@ -924,68 +1000,86 @@ async function updateHistoryUI() {
     if (clearBtn) clearBtn.style.display = 'flex';
 
     let html = `
-        <div class="history-grid" style="display: grid; gap: 1.5rem;">
+        <div class="history-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Header for the list -->
+            <div style="display: flex; padding: 0 1.25rem 0.5rem; color: #A3AED0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div style="min-width: 180px;">Date & Status</div>
+                <div style="flex: 1;">Target Crop</div>
+                <div style="flex: 1.5;">Suggested Fertilizers</div>
+                <div style="min-width: 200px;">NPK Levels (mg/kg)</div>
+                <div style="min-width: 180px;">pH / Moist / Temp</div>
+                <div style="width: 36px;"></div>
+            </div>
     `;
 
     // Show latest first
-    [...history].reverse().forEach((record, revIndex) => {
-        const index = history.length - 1 - revIndex;
+    [...history].reverse().forEach((record) => {
         const result = analyzeSoilData(record);
         const date = new Date(record.timestamp);
         const formattedDate = date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric',
+            year: 'numeric'
+        });
+        const formattedTime = date.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
         });
 
+        const statusColor = result.overallStatus.status === 'excellent' ? '#05CD99' :
+            result.overallStatus.status === 'good' ? '#4ade80' :
+                result.overallStatus.status === 'fair' ? '#FFAC33' : '#EE5D72';
+
+        // Format fertilizers as pill badges
+        const fertilizerBadges = result.recommendations.length > 0
+            ? result.recommendations.map(rec => `
+                <span style="background: rgba(67, 24, 255, 0.05); color: #4318FF; font-size: 0.7rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; margin-right: 4px; border: 1px solid rgba(67, 24, 255, 0.1); white-space: nowrap;">${rec.fertilizer}</span>
+            `).join('')
+            : '<span style="color: #05CD99; font-size: 0.75rem; font-weight: 600;">✓ Optimal</span>';
+
         html += `
-            <div class="history-card glass-card" style="background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid #E0E5F2; transition: all 0.3s ease; position: relative; overflow: hidden;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-                            <span style="font-size: 0.85rem; font-weight: 700; color: #707EAE; text-transform: uppercase; letter-spacing: 0.5px;">${formattedDate}</span>
-                            <span class="status-badge ${result.overallStatus.status}" style="font-size: 0.75rem; padding: 2px 10px; border-radius: 99px; font-weight: 700;">${result.overallStatus.status.toUpperCase()}</span>
-                        </div>
-                        <h4 style="color: var(--primary-color); font-size: 1.15rem; font-weight: 800;">Analysis for ${record.crop}</h4>
+            <div class="history-item-row" style="display: flex; align-items: center; background: white; border-radius: 16px; padding: 0.875rem 1.25rem; border: 1px solid #E0E5F2; transition: transform 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                <!-- Status & Date -->
+                <div style="display: flex; align-items: center; gap: 12px; min-width: 180px;">
+                    <div title="${result.overallStatus.status}" style="width: 10px; height: 10px; border-radius: 50%; background: ${statusColor}; flex-shrink: 0; box-shadow: 0 0 8px ${statusColor}44;"></div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color);">${formattedDate}</span>
+                        <span style="font-size: 0.7rem; color: #A3AED0; font-weight: 500;">${formattedTime}</span>
                     </div>
-                    <button class="btn-icon danger" onclick="deleteHistoryItem('${record.id}')" title="Delete Record" style="background: rgba(238, 93, 114, 0.1); color: var(--accent-red); width: 36px; height: 36px; border-radius: 10px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                </div>
+
+                <!-- Crop -->
+                <div style="flex: 1; min-width: 0; padding-right: 1rem;">
+                    <span style="font-weight: 700; color: var(--primary-color); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${record.crop}</span>
+                </div>
+
+                <!-- Fertilizers -->
+                <div style="flex: 1.5; min-width: 0; display: flex; flex-wrap: nowrap; overflow: hidden; align-items: center; margin-right: 1rem;">
+                    ${fertilizerBadges}
+                </div>
+
+                <!-- NPK Values -->
+                <div style="display: flex; gap: 0.75rem; min-width: 200px; background: #F8FAFC; padding: 6px 12px; border-radius: 10px; margin-right: 1.5rem;">
+                    <div style="flex: 1; text-align: center;"><small style="color: #A3AED0; font-weight: 700; font-size: 0.65rem; display: block;">N</small><span style="font-weight: 800; font-size: 0.85rem; color: #4318FF;">${record.nitrogen}</span></div>
+                    <div style="flex: 1; text-align: center; border-left: 1px solid #E0E5F2; border-right: 1px solid #E0E5F2;"><small style="color: #A3AED0; font-weight: 700; font-size: 0.65rem; display: block;">P</small><span style="font-weight: 800; font-size: 0.85rem; color: #9747FF;">${record.phosphorus}</span></div>
+                    <div style="flex: 1; text-align: center;"><small style="color: #A3AED0; font-weight: 700; font-size: 0.65rem; display: block;">K</small><span style="font-weight: 800; font-size: 0.85rem; color: #FF5630;">${record.potassium}</span></div>
+                </div>
+
+                <!-- Other Values -->
+                <div style="display: flex; gap: 1rem; min-width: 180px; align-items: center;">
+                    <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.ph}</strong> <small>pH</small></div>
+                    <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.moisture}%</strong> <small>M</small></div>
+                    <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.temperature}°C</strong> <small>T</small></div>
+                </div>
+
+                <!-- Delete Action -->
+                <div style="width: 36px; text-align: right;">
+                    <button class="btn-icon danger" onclick="deleteHistoryItem('${record.id}')" title="Delete Record" style="background: rgba(238, 93, 114, 0.08); color: var(--accent-red); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
                     </button>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1rem; background: #F9FAFC; border-radius: 15px;">
-                    <div style="text-align: center;">
-                        <span style="display: block; font-size: 0.7rem; color: #a3aed0; font-weight: 700; text-transform: uppercase;">Nitrogen</span>
-                        <span style="font-size: 1rem; font-weight: 800; color: var(--primary-color);">${record.nitrogen} <small>mg/kg</small></span>
-                    </div>
-                    <div style="text-align: center; border-left: 1px solid #E0E5F2; border-right: 1px solid #E0E5F2;">
-                        <span style="display: block; font-size: 0.7rem; color: #a3aed0; font-weight: 700; text-transform: uppercase;">Phosphorus</span>
-                        <span style="font-size: 1rem; font-weight: 800; color: var(--primary-color);">${record.phosphorus} <small>mg/kg</small></span>
-                    </div>
-                    <div style="text-align: center;">
-                        <span style="display: block; font-size: 0.7rem; color: #a3aed0; font-weight: 700; text-transform: uppercase;">Potassium</span>
-                        <span style="font-size: 1rem; font-weight: 800; color: var(--primary-color);">${record.potassium} <small>mg/kg</small></span>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 1.5rem; margin-top: 1.25rem; padding-left: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 0.85rem; color: #707EAE;">pH:</span>
-                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--primary-color);">${record.ph}</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 0.85rem; color: #707EAE;">Moisture:</span>
-                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--primary-color);">${record.moisture}%</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 0.85rem; color: #707EAE;">Temp:</span>
-                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--primary-color);">${record.temperature}°C</span>
-                    </div>
                 </div>
             </div>
         `;
@@ -1005,10 +1099,10 @@ async function updateAlertsPageUI() {
     const latestData = await getLatestSoilData();
     if (!latestData) {
         container.innerHTML = `
-            <div class="empty-state" style="min-height: 400px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">🔔</div>
-                <h3 class="info-title">No Data Yet</h3>
-                <p class="info-text">Enter soil data on the dashboard to see alerts.</p>
+            <div class="empty-state" style="text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 1px dashed #E0E5F2;">
+                <h3 style="color: var(--primary-color); font-weight: 700;">No Data Yet</h3>
+                <p style="color: var(--secondary-color); margin-top: 0.5rem;">Enter soil data on the dashboard to see alerts.</p>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'" style="margin-top: 2rem;">Go to Dashboard</button>
             </div>
         `;
         return;
@@ -1019,50 +1113,59 @@ async function updateAlertsPageUI() {
 
     if (warnings.length === 0) {
         container.innerHTML = `
-            <div class="empty-state" style="min-height: 400px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">🔔</div>
-                <h3 class="info-title">All Caught Up!</h3>
-                <p class="info-text">Your soil conditions are optimal. No alerts at this time.</p>
+            <div class="empty-state" style="text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 1px dashed #E0E5F2;">
+                <h3 style="color: var(--primary-color); font-weight: 700;">All Caught Up!</h3>
+                <p style="color: var(--secondary-color); margin-top: 0.5rem;">Your soil conditions are optimal. No alerts at this time.</p>
+                <p style="font-size: 0.85rem; color: #A3AED0; margin-top: 1rem;">Based on analysis for <strong>${latestData.crop}</strong> on ${new Date(latestData.timestamp).toLocaleDateString()}</p>
             </div>
         `;
         return;
     }
 
+    const formattedDate = new Date(latestData.timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+
     let html = `
-        <div class="info-section" style="margin-bottom: 2rem; background: #F9FAFC; border-radius: 20px; padding: 1.5rem; border: 1px solid #E0E5F2;">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                <div style="width: 40px; height: 40px; background: rgba(67, 24, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                    🔍
-                </div>
-                <div>
-                    <h3 style="margin: 0; color: var(--primary-color); font-weight: 700; font-size: 1.1rem;">Analysis Context</h3>
-                    <p style="margin: 0; font-size: 0.85rem; color: #707EAE;">Based on your last soil test for <strong>${latestData.crop}</strong></p>
-                </div>
+        <div class="alerts-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Header for the list -->
+            <div style="display: flex; padding: 0 1.25rem 0.5rem; color: #A3AED0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div style="min-width: 150px;">Category</div>
+                <div style="min-width: 120px;">Severity</div>
+                <div style="flex: 1;">Alert Message</div>
+                <div style="min-width: 150px; text-align: right;">Analysis Date</div>
             </div>
-            <p style="margin: 0; color: var(--secondary-color); font-size: 0.95rem; line-height: 1.6;">
-                We've detected <strong>${warnings.length} critical issues</strong> in your soil health that require immediate attention. 
-                These alerts were generated based on the NPK, pH, and environmental parameters entered on ${new Date(latestData.timestamp).toLocaleDateString()}.
-            </p>
-        </div>
-        <div class="alerts-grid" style="display: grid; gap: 1.5rem; padding: 0;">
     `;
 
     warnings.forEach(warning => {
         const severityColor = warning.severity === 'high' ? '#E31A1A' : '#FF9948';
-        const severityBg = warning.severity === 'high' ? 'rgba(227, 26, 26, 0.05)' : 'rgba(255, 153, 72, 0.05)';
-        const icon = warning.severity === 'high' ? '🚨' : '⚠️';
+        const severityBg = warning.severity === 'high' ? 'rgba(227, 26, 26, 0.08)' : 'rgba(255, 153, 72, 0.08)';
 
         html += `
-            <div class="alert-card" style="background: white; border-radius: 20px; padding: 2rem; border: 1px solid #E0E5F2; border-left: 6px solid ${severityColor}; display: flex; align-items: flex-start; gap: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.2s ease;">
-                <div style="width: 56px; height: 56px; background: ${severityBg}; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0;">
-                    ${icon}
+            <div class="alert-item-row" style="display: flex; align-items: center; background: white; border-radius: 16px; padding: 1rem 1.25rem; border: 1px solid #E0E5F2; transition: transform 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-left: 5px solid ${severityColor};">
+                <!-- Category/Type -->
+                <div style="min-width: 150px; display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: ${severityColor}; flex-shrink: 0; box-shadow: 0 0 8px ${severityColor}44;"></div>
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--primary-color);">${warning.type}</span>
                 </div>
-                <div style="flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <h3 style="margin: 0; color: var(--primary-color); font-weight: 700; font-size: 1.25rem;">${warning.type}</h3>
-                        <span style="background: ${severityBg}; color: ${severityColor}; padding: 4px 12px; border-radius: 99px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">${warning.severity} Severity</span>
-                    </div>
-                    <p style="margin: 0; color: var(--secondary-color); line-height: 1.6; font-size: 1rem;">${warning.message}</p>
+
+                <!-- Severity Badge -->
+                <div style="min-width: 120px;">
+                    <span style="background: ${severityBg}; color: ${severityColor}; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid ${severityColor}22;">
+                        ${warning.severity}
+                    </span>
+                </div>
+
+                <!-- Message -->
+                <div style="flex: 1; min-width: 0; padding-right: 2rem;">
+                    <p style="margin: 0; color: #475569; font-size: 0.95rem; line-height: 1.4;">${warning.message}</p>
+                </div>
+
+                <!-- Date -->
+                <div style="min-width: 150px; text-align: right;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #A3AED0;">${formattedDate}</span>
                 </div>
             </div>
         `;
@@ -1116,8 +1219,12 @@ async function deleteHistoryItem(id) {
 
 // Automatically update UI on relevant pages - Wait for Auth to be ready
 document.addEventListener('DOMContentLoaded', () => {
-    auth.onAuthStateChanged(async (user) => {
+    // Check auth state for premium features
+    firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
+            const isPremium = await checkPremiumStatus(user.uid);
+            updatePremiumUI(isPremium);
+
             if (document.getElementById('nitrogenValue')) {
                 await updateDashboardUI();
             }

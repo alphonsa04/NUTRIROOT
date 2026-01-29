@@ -251,8 +251,20 @@ function resetPassword(email) {
 
 // 5. Sign Out
 function signOut() {
+    const user = auth.currentUser;
+    const uid = user ? user.uid : null;
+
     auth.signOut().then(() => {
-        console.log('User signed out, redirecting to index.html');
+        console.log('User signed out, clearing local cache...');
+
+        // Clear user-specific soil data
+        if (uid) {
+            localStorage.removeItem(`nutriroot_latest_soil_data_${uid}`);
+        }
+
+        // Also fallback clear any legacy keys if they exist
+        localStorage.removeItem('nutriroot_latest_soil_data');
+
         window.location.href = 'index.html';
     }).catch((error) => {
         console.error('Sign out error:', error);
@@ -325,22 +337,45 @@ function updateProfileUI(user) {
     console.log('updateProfileUI: Attempting to populate dropdown for:', user.email);
     const nameEl = document.getElementById('dropdownUserName');
     const emailEl = document.getElementById('dropdownUserEmail');
+    const premiumBadge = document.getElementById('premiumBadge');
 
     if (nameEl && emailEl) {
-        nameEl.textContent = user.displayName || "Farmer";
+        // Set initial values
+        const initialName = user.displayName || "Farmer";
         emailEl.textContent = user.email;
         console.log('updateProfileUI: UI updated successfully with:', user.email);
 
-        // Try to fetch custom name from Firestore if displayName is empty or default
-        if (!user.displayName || user.displayName === "Farmer" || user.displayName === "User") {
-            const userRef = db.collection('users').doc(user.uid);
-            userRef.get().then((doc) => {
-                if (doc.exists && doc.data().name) {
-                    nameEl.textContent = doc.data().name;
-                    console.log('updateProfileUI: Name updated from Firestore:', doc.data().name);
+        // Fetch user data from Firestore to check premium status and custom name
+        const userRef = db.collection('users').doc(user.uid);
+        userRef.get().then((doc) => {
+            if (doc.exists) {
+                const userData = doc.data();
+
+                // Update name if available (but preserve the badge element)
+                const displayName = userData.name || initialName;
+
+                // Clear and rebuild the name element content
+                nameEl.textContent = displayName;
+
+                // Show premium badge if user is premium
+                if (premiumBadge) {
+                    if (userData.isPremium === true) {
+                        premiumBadge.style.display = 'inline-block';
+                        console.log('updateProfileUI: Premium badge shown for user:', userData.isPremium);
+                    } else {
+                        premiumBadge.style.display = 'none';
+                        console.log('updateProfileUI: Premium badge hidden, isPremium:', userData.isPremium);
+                    }
+                } else {
+                    console.warn('updateProfileUI: Premium badge element not found');
                 }
-            }).catch(err => console.error('Error fetching name from Firestore:', err));
-        }
+
+                console.log('updateProfileUI: Name updated from Firestore:', displayName);
+            } else {
+                console.warn('updateProfileUI: User document does not exist in Firestore');
+                nameEl.textContent = initialName;
+            }
+        }).catch(err => console.error('Error fetching user data from Firestore:', err));
     } else {
         console.warn('updateProfileUI: Dropdown elements NOT found. (nameEl:', !!nameEl, 'emailEl:', !!emailEl, ')');
     }

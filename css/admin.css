@@ -66,6 +66,8 @@
 /* Admin Main Content */
 .admin-main-content {
     margin-left: 250px;
+    margin-top: 80px;
+    /* Space for fixed navbar */
     padding: 2rem;
     min-height: calc(100vh - 70px);
 }

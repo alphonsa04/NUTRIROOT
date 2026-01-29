@@ -8,6 +8,7 @@
     <title>Crop Reference | NutriRoot</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@800&display=swap" rel="stylesheet">
     <style>
         /* Crop Reference Specific Styles */
         .knowledge-hero {
@@ -557,9 +558,15 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar landing-nav">
-        <a href="index.html" class="navbar-brand">
-            <img src="assets/images/logo.png" alt="NutriRoot Logo" width="32" height="32">
-            <span class="brand-text">NutriRoot</span>
+        <a href="index.html" class="navbar-brand" style="text-decoration: none;">
+            <div class="nutriroot-logo-text">
+                <span class="logo-part">NUTR</span>
+                <span class="logo-plant-container" style="width: 38px; height: 60px; margin: 0 -5px;">
+                    <img src="assets/images/tree-logo.png" alt="Tree" class="logo-plant-img"
+                        style="height: 75px; top: -20px;">
+                </span>
+                <span class="logo-part">ROOT</span>
+            </div>
         </a>
 
         <!-- Navigation Menu -->
@@ -570,10 +577,9 @@
             <a href="index.html#contact" class="nav-menu-link">Contact</a>
         </div>
 
-        <!-- Auth Buttons -->
-        <div class="nav-auth-buttons">
-            <button onclick="window.location.href='index.html'" class="btn-nav-login">Log In</button>
-            <button onclick="window.location.href='index.html'" class="btn-nav-signup">Get Started</button>
+        <!-- Auth Buttons (Populated dynamically) -->
+        <div class="nav-auth-buttons" id="navAuthButtons">
+            <!-- Loading state or empty -->
         </div>
 
         <!-- Mobile Menu Toggle -->
@@ -618,13 +624,22 @@
     </footer>
 
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/admin-auth.js"></script>
     <script src="js/crop-knowledge.js"></script>
     <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
+        });
+
         // Mobile Menu Toggle
         function toggleMobileMenu() {
             const navMenu = document.querySelector('.nav-menu');
@@ -649,6 +664,24 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadCropData().then(() => {
                 populateCropsGrid();
+            });
+
+            // Handle Navbar Auth State
+            firebase.auth().onAuthStateChanged(user => {
+                const authButtons = document.getElementById('navAuthButtons');
+                if (!authButtons) return;
+
+                if (user) {
+                    authButtons.innerHTML = `
+                        <button onclick="window.location.href='dashboard.html'" class="btn-nav-login" style="background: var(--primary-color); color: white; border: none;">Dashboard</button>
+                        <button onclick="signOut()" class="btn-nav-signup" style="background: transparent; border: 1px solid white;">Sign Out</button>
+                    `;
+                } else {
+                    authButtons.innerHTML = `
+                        <button onclick="window.location.href='index.html'" class="btn-nav-login">Log In</button>
+                        <button onclick="window.location.href='index.html'" class="btn-nav-signup">Get Started</button>
+                    `;
+                }
             });
         });
 

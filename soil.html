@@ -7,6 +7,7 @@
     <title>Enter Soil Data | NutriRoot</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/payment.css">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -85,9 +86,14 @@
 <body>
     <!-- Top Navigation Block -->
     <nav class="navbar">
-        <a href="dashboard.html" class="navbar-brand">
-            <img src="assets/images/logo.png" alt="NutriRoot Logo" width="24" height="24">
-            NutriRoot
+        <a href="dashboard.html" class="navbar-brand" style="text-decoration: none;">
+            <div class="nutriroot-logo-text">
+                <span class="logo-part">NUTR</span>
+                <span class="logo-plant-container">
+                    <img src="assets/images/tree-logo.png" alt="Tree" class="logo-plant-img">
+                </span>
+                <span class="logo-part">ROOT</span>
+            </div>
         </a>
 
         <div class="nav-links">
@@ -141,23 +147,7 @@
                     <span class="user-name" id="dropdownUserName">User</span>
                     <span class="user-email" id="dropdownUserEmail">email@example.com</span>
                 </div>
-                <a href="#" class="dropdown-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    My Profile
-                </a>
-                <a href="#" class="dropdown-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                        </path>
-                    </svg>
-                    Settings
-                </a>
-                <div style="border-top: 1px solid #F4F7FE; margin: 0.5rem 0;"></div>
+
                 <a href="#" onclick="signOut()" class="dropdown-item danger">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -262,9 +252,30 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="js/payment_gateway.js"></script>
     <script>
         async function handleSoilSubmit(e) {
             e.preventDefault();
+
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                alert("Please log in to continue.");
+                return;
+            }
+
+            // check trial/premium status
+            const isPremium = await checkPremiumStatus(user.uid);
+            const analysisCount = await getAnalysisCount(user.uid);
+
+            if (analysisCount >= 1 && !isPremium) {
+                PaymentGateway.showPlanSelection(async () => {
+                    await setPremiumStatus(user.uid, true);
+                    handleSoilSubmit(e);
+                });
+                return;
+            }
+
 
             const data = {
                 nitrogen: parseFloat(document.getElementById('nitrogen').value),

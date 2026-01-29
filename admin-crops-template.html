@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,11 +15,19 @@
     <script src="js/admin-auth.js"></script>
     <script src="js/admin-users.js"></script>
 </head>
+
 <body>
     <nav class="navbar">
-        <a href="admin.html" class="navbar-brand">
-            <img src="assets/images/logo.png" alt="NutriRoot Logo" width="24" height="24">
-            NutriRoot Admin
+        <a href="admin.html" class="navbar-brand" style="text-decoration: none;">
+            <div class="nutriroot-logo-text">
+                <span class="logo-part">NUTR</span>
+                <span class="logo-plant-container">
+                    <img src="assets/images/tree-logo.png" alt="Tree" class="logo-plant-img">
+                </span>
+                <span class="logo-part">ROOT</span>
+            </div>
+            <span
+                style="font-weight: 600; color: var(--secondary-color); font-size: 0.9rem; border-left: 1px solid #E0E5F2; padding-left: 10px;">Admin</span>
         </a>
         <div class="user-profile">
             <button class="btn-icon" onclick="toggleProfileMenu()" id="profileBtn">
@@ -177,7 +186,11 @@
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
-                    <tr><td colspan="5" class="admin-loading"><div class="admin-spinner"></div></td></tr>
+                    <tr>
+                        <td colspan="5" class="admin-loading">
+                            <div class="admin-spinner"></div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -216,7 +229,8 @@
         <div class="admin-modal admin-confirm-dialog">
             <div class="admin-confirm-icon">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    </path>
                     <line x1="12" y1="9" x2="12" y2="13"></line>
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
@@ -228,9 +242,11 @@
             <input type="hidden" id="confirmDeleteUserId">
             <div class="admin-form-actions">
                 <button type="button" class="btn btn-outline" onclick="closeDeleteUserModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" style="background: var(--accent-red);" onclick="deleteUser()">Delete User</button>
+                <button type="button" class="btn btn-primary" style="background: var(--accent-red);"
+                    onclick="deleteUser()">Delete User</button>
             </div>
         </div>
     </div>
 </body>
+
 </html>

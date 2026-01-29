@@ -39,9 +39,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
-    // Crop knowledge base - read-only for authenticated users, admins can write
+    // Crop knowledge base - public read access, admins can write
     match /crops/{cropId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write, delete: if isAdmin();
     }
     

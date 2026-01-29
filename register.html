@@ -12,6 +12,26 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@800&display=swap" rel="stylesheet">
+    <style>
+        .nutriroot-logo-text {
+            font-size: 2.5rem;
+            height: 70px;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo-plant-container {
+            width: 42px;
+            height: 70px;
+            margin: 0 -6px;
+        }
+
+        .logo-plant-img {
+            height: 100px;
+            top: -30px;
+        }
+    </style>
 </head>
 
 <body class="auth-page">
@@ -20,16 +40,13 @@
         <!-- Register Card -->
         <div class="auth-card">
             <!-- Logo and Header -->
-            <div class="auth-header">
-                <div class="auth-logo">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#2A6B33" />
-                        <path d="M2 17L12 22L22 17" stroke="#2A6B33" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                        <path d="M2 12L12 17L22 12" stroke="#2A6B33" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg>
-                    <h1>NutriRoot</h1>
+            <div class="auth-header" style="text-align: center;">
+                <div class="nutriroot-logo-text">
+                    <span class="logo-part">NUTR</span>
+                    <span class="logo-plant-container">
+                        <img src="assets/images/tree-logo.png" alt="Tree" class="logo-plant-img">
+                    </span>
+                    <span class="logo-part">ROOT</span>
                 </div>
                 <h2 class="auth-title">Create Account</h2>
                 <p class="auth-subtitle">Join NutriRoot for smart farming solutions</p>
