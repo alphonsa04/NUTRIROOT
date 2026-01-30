@@ -703,6 +703,9 @@ async function updateDashboardUI() {
             });
         }
     }
+
+    // Update sparkline graphs
+    await updateDashboardGraphs();
 }
 
 
@@ -1242,5 +1245,83 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+
+
+/* ========================================
+   SPARKLINE GRAPHS LOGIC
+   ======================================== */
+
+/**
+ * Generate an SVG path for a sparkline graph from data points
+ * @param {Array<number>} data - Array of values
+ * @param {number} width - SVG width
+ * @param {number} height - SVG height
+ * @returns {string} SVG path 'd' string
+ */
+function generateSparklinePath(data, width = 100, height = 40) {
+    if (!data || data.length === 0) return `M 0 ${height / 2} L ${width} ${height / 2}`;
+
+    // If only one point, draw a flat line
+    if (data.length === 1) return `M 0 ${height / 2} L ${width} ${height / 2}`;
+
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    // Avoid division by zero
+    const range = (max - min) === 0 ? 1 : (max - min);
+
+    // Create points
+    const points = data.map((val, index) => {
+        const x = (index / (data.length - 1)) * width;
+        // Invert Y (SVG 0 is top), add padding (5px)
+        const normalizedY = 1 - ((val - min) / range);
+        const y = (normalizedY * (height - 10)) + 5;
+        return `${x} ${y}`;
+    });
+
+    // Create path command
+    return `M ${points.join(' L ')}`;
+}
+
+/**
+ * Update dashboard sparklines with real history data
+ */
+async function updateDashboardGraphs() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        let history = [];
+        // Check if we can fetch history
+        if (typeof getSoilHistory === 'function') {
+            const allHistory = await getSoilHistory();
+            if (allHistory) history = allHistory;
+        }
+
+        if (!history || history.length < 2) {
+            console.log('Not enough history for dynamic graphs');
+            return;
+        }
+
+        // Take last 10 entries (chronological order required for graph)
+        const recent = history.slice(0, 10).reverse();
+
+        const nData = recent.map(r => parseFloat(r.nitrogen || 0));
+        const pData = recent.map(r => parseFloat(r.phosphorus || 0));
+        const kData = recent.map(r => parseFloat(r.potassium || 0));
+
+        const nPath = document.getElementById('nitrogenGraph');
+        const pPath = document.getElementById('phosphorusGraph');
+        const kPath = document.getElementById('potassiumGraph');
+
+        if (nPath) nPath.setAttribute('d', generateSparklinePath(nData));
+        if (pPath) pPath.setAttribute('d', generateSparklinePath(pData));
+        if (kPath) kPath.setAttribute('d', generateSparklinePath(kData));
+
+        console.log('Updated dashboard graphs with real data points:', recent.length);
+
+    } catch (error) {
+        console.error('Error updating dashboard graphs:', error);
+    }
+}
 
 // End of script
