@@ -426,7 +426,10 @@ function generateWarnings(analysis, soilData) {
         warnings.push({
             type: 'Nitrogen Deficiency',
             severity: 'high',
-            message: 'Low nitrogen can reduce crop growth and yield. Apply nitrogen-rich fertilizers.'
+            message: 'Low nitrogen can reduce crop growth and yield. Apply nitrogen-rich fertilizers.',
+            parameter: 'Nitrogen',
+            value: soilData.nitrogen,
+            unit: 'mg/kg'
         });
     }
 
@@ -434,7 +437,10 @@ function generateWarnings(analysis, soilData) {
         warnings.push({
             type: 'Phosphorus Deficiency',
             severity: 'high',
-            message: 'Low phosphorus affects root development. Apply phosphate fertilizers.'
+            message: 'Low phosphorus affects root development. Apply phosphate fertilizers.',
+            parameter: 'Phosphorus',
+            value: soilData.phosphorus,
+            unit: 'mg/kg'
         });
     }
 
@@ -442,7 +448,10 @@ function generateWarnings(analysis, soilData) {
         warnings.push({
             type: 'Potassium Deficiency',
             severity: 'medium',
-            message: 'Low potassium reduces disease resistance. Apply potash fertilizers.'
+            message: 'Low potassium reduces disease resistance. Apply potash fertilizers.',
+            parameter: 'Potassium',
+            value: soilData.potassium,
+            unit: 'mg/kg'
         });
     }
 
@@ -450,7 +459,10 @@ function generateWarnings(analysis, soilData) {
         warnings.push({
             type: 'Acidic Soil',
             severity: 'high',
-            message: 'Acidic soil can limit nutrient availability. Consider applying lime.'
+            message: 'Acidic soil can limit nutrient availability. Consider applying lime.',
+            parameter: 'Soil pH',
+            value: soilData.ph,
+            unit: 'pH'
         });
     }
 
@@ -458,7 +470,10 @@ function generateWarnings(analysis, soilData) {
         warnings.push({
             type: 'Alkaline Soil',
             severity: 'high',
-            message: 'Alkaline soil can cause nutrient deficiencies. Consider applying sulfur.'
+            message: 'Alkaline soil can cause nutrient deficiencies. Consider applying sulfur.',
+            parameter: 'Soil pH',
+            value: soilData.ph,
+            unit: 'pH'
         });
     }
 
@@ -466,7 +481,10 @@ function generateWarnings(analysis, soilData) {
         warnings.push({
             type: 'Low Moisture',
             severity: 'medium',
-            message: 'Increase irrigation to maintain optimal moisture levels.'
+            message: 'Increase irrigation to maintain optimal moisture levels.',
+            parameter: 'Moisture',
+            value: soilData.moisture,
+            unit: '%'
         });
     }
 
@@ -474,7 +492,10 @@ function generateWarnings(analysis, soilData) {
         warnings.push({
             type: 'High Moisture',
             severity: 'medium',
-            message: 'Excessive moisture can cause root rot. Improve drainage.'
+            message: 'Excessive moisture can cause root rot. Improve drainage.',
+            parameter: 'Moisture',
+            value: soilData.moisture,
+            unit: '%'
         });
     }
 
@@ -1095,87 +1116,13 @@ async function updateHistoryUI() {
 /**
  * Update alerts page UI
  */
+/**
+ * Update alerts page UI
+ * (Logic moved to js/alerts.js)
+ */
 async function updateAlertsPageUI() {
-    const container = document.getElementById('alertsContainer');
-    if (!container) return;
-
-    const latestData = await getLatestSoilData();
-    if (!latestData) {
-        container.innerHTML = `
-            <div class="empty-state" style="text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 1px dashed #E0E5F2;">
-                <h3 style="color: var(--primary-color); font-weight: 700;">No Data Yet</h3>
-                <p style="color: var(--secondary-color); margin-top: 0.5rem;">Enter soil data on the dashboard to see alerts.</p>
-                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'" style="margin-top: 2rem;">Go to Dashboard</button>
-            </div>
-        `;
-        return;
-    }
-
-    const result = analyzeSoilData(latestData);
-    const warnings = result.warnings;
-
-    if (warnings.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state" style="text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 1px dashed #E0E5F2;">
-                <h3 style="color: var(--primary-color); font-weight: 700;">All Caught Up!</h3>
-                <p style="color: var(--secondary-color); margin-top: 0.5rem;">Your soil conditions are optimal. No alerts at this time.</p>
-                <p style="font-size: 0.85rem; color: #A3AED0; margin-top: 1rem;">Based on analysis for <strong>${latestData.crop}</strong> on ${new Date(latestData.timestamp).toLocaleDateString()}</p>
-            </div>
-        `;
-        return;
-    }
-
-    const formattedDate = new Date(latestData.timestamp).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
-
-    let html = `
-        <div class="alerts-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <!-- Header for the list -->
-            <div style="display: flex; padding: 0 1.25rem 0.5rem; color: #A3AED0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                <div style="min-width: 150px;">Category</div>
-                <div style="min-width: 120px;">Severity</div>
-                <div style="flex: 1;">Alert Message</div>
-                <div style="min-width: 150px; text-align: right;">Analysis Date</div>
-            </div>
-    `;
-
-    warnings.forEach(warning => {
-        const severityColor = warning.severity === 'high' ? '#E31A1A' : '#FF9948';
-        const severityBg = warning.severity === 'high' ? 'rgba(227, 26, 26, 0.08)' : 'rgba(255, 153, 72, 0.08)';
-
-        html += `
-            <div class="alert-item-row" style="display: flex; align-items: center; background: white; border-radius: 16px; padding: 1rem 1.25rem; border: 1px solid #E0E5F2; transition: transform 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-left: 5px solid ${severityColor};">
-                <!-- Category/Type -->
-                <div style="min-width: 150px; display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: ${severityColor}; flex-shrink: 0; box-shadow: 0 0 8px ${severityColor}44;"></div>
-                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--primary-color);">${warning.type}</span>
-                </div>
-
-                <!-- Severity Badge -->
-                <div style="min-width: 120px;">
-                    <span style="background: ${severityBg}; color: ${severityColor}; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid ${severityColor}22;">
-                        ${warning.severity}
-                    </span>
-                </div>
-
-                <!-- Message -->
-                <div style="flex: 1; min-width: 0; padding-right: 2rem;">
-                    <p style="margin: 0; color: #475569; font-size: 0.95rem; line-height: 1.4;">${warning.message}</p>
-                </div>
-
-                <!-- Date -->
-                <div style="min-width: 150px; text-align: right;">
-                    <span style="font-size: 0.85rem; font-weight: 600; color: #A3AED0;">${formattedDate}</span>
-                </div>
-            </div>
-        `;
-    });
-
-    html += '</div>';
-    container.innerHTML = html;
+    // Deprecated: js/alerts.js now handles this
+    console.log('Legacy updateAlertsPageUI called - functionality moved to alerts.js');
 }
 
 /**
@@ -1227,6 +1174,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             const isPremium = await checkPremiumStatus(user.uid);
             updatePremiumUI(isPremium);
+            await updateAlertBadge();
+
 
             if (document.getElementById('nitrogenValue')) {
                 await updateDashboardUI();
@@ -1237,9 +1186,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('history-container')) {
                 await updateHistoryUI();
             }
-            if (document.getElementById('alertsContainer')) {
-                await updateAlertsPageUI();
+            if (document.getElementById('history-container')) {
+                await updateHistoryUI();
             }
+            // alerts.js handles its own rendering now
+
         }
     });
 });
@@ -1325,3 +1276,85 @@ async function updateDashboardGraphs() {
 }
 
 // End of script
+
+/* ========================================
+   NOTIFICATION BADGE LOGIC
+   ======================================== */
+
+/**
+ * Check for soil deficiencies and update the nav badge
+ */
+async function updateAlertBadge() {
+    // We target elements with ID 'alertBadge'
+    const badge = document.getElementById('alertBadge');
+    if (!badge) return;
+
+    try {
+        const soilData = await getLatestSoilData();
+        if (!soilData) {
+            badge.style.display = 'none';
+            return;
+        }
+
+        const analysis = analyzeSoilData(soilData);
+        const warnings = analysis.warnings || [];
+
+        // Count critical and medium severity issues
+        const issues = warnings.filter(w => w.severity === 'high' || w.severity === 'medium').length;
+
+        if (issues > 0) {
+            badge.textContent = issues > 9 ? '9+' : issues;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) {
+        console.warn('Failed to update alert badge:', e);
+        badge.style.display = 'none';
+    }
+}
+
+
+/* ========================================
+   NOTIFICATION BADGE LOGIC (Updated View Check)
+   ======================================== */
+
+/**
+ * Check for soil deficiencies and update the nav badge
+ * Checks if user has already viewed the latest analysis.
+ */
+async function updateAlertBadge() {
+    const badge = document.getElementById('alertBadge');
+    if (!badge) return;
+
+    try {
+        const soilData = await getLatestSoilData();
+        if (!soilData) {
+            badge.style.display = 'none';
+            return;
+        }
+
+        // Check if user has already viewed this specific analysis
+        const lastViewedTime = localStorage.getItem('nutriroot_last_viewed_analysis');
+        if (lastViewedTime && parseInt(lastViewedTime) >= soilData.timestamp) {
+            badge.style.display = 'none';
+            return;
+        }
+
+        const analysis = analyzeSoilData(soilData);
+        const warnings = analysis.warnings || [];
+        
+        // Count critical and medium severity issues
+        const issues = warnings.filter(w => w.severity === 'high' || w.severity === 'medium').length;
+
+        if (issues > 0) {
+            badge.textContent = issues > 9 ? '9+' : issues;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) {
+        console.warn('Failed to update alert badge:', e);
+        badge.style.display = 'none';
+    }
+}

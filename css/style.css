@@ -1792,3 +1792,210 @@ body {
         transform: translateY(0);
     }
 }
+
+/* ========================================
+   ALERTS PAGE STYLES (Added)
+   ======================================== */
+
+/* Filters */
+.alerts-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.filter-btn {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #E0E5F2;
+    padding: 0.5rem 1.25rem;
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--secondary-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Alert Cards */
+.alert-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid #E0E5F2;
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: slideUp 0.4s ease-out;
+}
+
+.alert-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+}
+
+.alert-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.alert-card.alert-critical .alert-icon-box,
+.alert-card.alert-high .alert-icon-box {
+    background: rgba(227, 26, 26, 0.1);
+    color: #e31a1a;
+}
+
+.alert-card.alert-medium .alert-icon-box {
+    background: rgba(255, 172, 51, 0.1);
+    color: #ff9800;
+}
+
+.alert-card.alert-low .alert-icon-box,
+.alert-card.alert-soil .alert-icon-box {
+    background: rgba(5, 205, 153, 0.1);
+    color: #05cd99;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.alert-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.alert-time {
+    font-size: 0.8rem;
+    color: #a0aec0;
+}
+
+.alert-message {
+    color: var(--secondary-color);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.alert-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-alert-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: gap 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-alert-action:hover {
+    gap: 0.8rem;
+    text-decoration: underline;
+}
+
+.alert-card.alert-critical,
+.alert-card.alert-high {
+    border-left: 5px solid #e31a1a;
+}
+.alert-card.alert-medium {
+    border-left: 5px solid #ff9800;
+}
+.alert-card.alert-low, 
+.alert-card.alert-soil {
+    border-left: 5px solid #05cd99;
+}
+
+/* Empty States */
+.all-good {
+    text-align: center;
+    background: linear-gradient(135deg, rgba(5, 205, 153, 0.05) 0%, rgba(255,255,255,0.8) 100%);
+    border: 1px solid rgba(5, 205, 153, 0.2);
+    border-radius: 24px;
+    padding: 3rem 2rem;
+}
+
+.empty-icon-bg {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+/* NOTIFICATION BADGE */
+.nav-link {
+    position: relative; 
+}
+
+.nav-notification-badge {
+    position: absolute;
+    top: 5px;
+    right: 15px; 
+    min-width: 18px;
+    height: 18px;
+    background-color: #e31a1a;
+    color: white;
+    border-radius: 9px;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid white;
+    transform: translate(50%, -50%);
+    box-shadow: 0 2px 5px rgba(227, 26, 26, 0.3);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+    from { transform: translate(50%, -50%) scale(0); }
+    to { transform: translate(50%, -50%) scale(1); }
+}
+
+@media (max-width: 768px) {
+    .nav-notification-badge {
+        top: 2px;
+        right: 2px;
+        transform: none;
+    }
+}
