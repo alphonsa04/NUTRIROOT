@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages | Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-auth.js"></script>
+    <script src="js/admin-messages.js"></script>
+</head>
+
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <a href="admin.html" class="navbar-brand"
+            style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+            <div class="nutriroot-logo-text">
+                <span class="logo-part">NUTR</span>
+                <span class="logo-plant-container">
+                    <img src="assets/images/tree-logo.png" alt="Tree" class="logo-plant-img">
+                </span>
+                <span class="logo-part">ROOT</span>
+            </div>
+            <span
+                style="font-weight: 600; color: var(--secondary-color); font-size: 0.9rem; border-left: 1px solid #E0E5F2; padding-left: 10px;">Admin</span>
+        </a>
+
+        <div class="user-profile">
+            <button class="btn-icon" onclick="toggleProfileMenu()" id="profileBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            <div id="profileMenu" class="dropdown-menu">
+                <div class="dropdown-header">
+                    <span class="user-name" id="adminUserName">Admin</span>
+                    <span class="user-email" id="adminUserEmail">admin@example.com</span>
+                </div>
+                <a href="dashboard.html" class="dropdown-item">User Dashboard</a>
+                <a href="#" onclick="signOut()" class="dropdown-item danger">Sign Out</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div class="admin-sidebar-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                Admin Panel
+            </div>
+        </div>
+        <nav class="admin-nav-links">
+            <a href="admin.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Overview
+            </a>
+            <a href="admin-messages.html" class="admin-nav-link active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                Messages
+            </a>
+            <a href="admin-users.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                Users
+            </a>
+            <a href="admin-crops.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                Crops
+            </a>
+            <a href="admin-analytics.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Analytics
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main-content">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="page-title">Messages</h1>
+                <p class="page-subtitle">View and manage inquiries from the contact form</p>
+            </div>
+            <div class="header-actions">
+                <div class="search-box">
+                    <input type="text" id="messageSearchInput" placeholder="Search messages..."
+                        onkeyup="handleMessageSearch()">
+                </div>
+                <button class="btn btn-outline" onclick="loadMessages()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Subject</th>
+                        <th>Message Preview</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="messagesTableBody">
+                    <!-- Messages populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Message Detail Modal -->
+    <div id="messageModal" class="modal-overlay">
+        <div class="auth-card" style="max-width: 600px;">
+            <div class="auth-header">
+                <h2 class="auth-title" id="msgModalSubject">Subject</h2>
+                <div class="auth-subtitle" id="msgModalSender">From: Name (email)</div>
+                <div style="font-size: 0.8rem; color: #999; margin-top: 5px;" id="msgModalDate">Date</div>
+            </div>
+
+            <div style="background: #F9FAFC; padding: 1.5rem; border-radius: 12px; border: 1px solid #E0E5F2; margin-bottom: 2rem; white-space: pre-wrap; color: #2C2C2C; line-height: 1.6;"
+                id="msgModalBody">
+                Message content...
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <a href="#" id="replyBtn" class="btn-auth-primary"
+                    style="text-decoration: none; text-align: center; display: block;">Reply via Email</a>
+                <button onclick="closeMessageModal()" class="btn-auth-primary"
+                    style="background: white; color: var(--primary-color); border: 1px solid #E0E5F2;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div class="notification-container"></div>
+</body>
+
+</html>

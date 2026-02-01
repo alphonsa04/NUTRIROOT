@@ -969,211 +969,227 @@ body {
     line-height: 1.6;
 }
 
-/* Contact Section - Minimalist Design */
+/* ========================================
+   CONTACT SECTION - MINIMALIST CLEAN
+   ======================================== */
+
 .contact-section {
+    position: relative;
     padding: 6rem 2rem;
-    background: #FAFAFA;
-    min-height: 100vh;
+    background: #F8F9FA;
+    /* Light gray professional background */
     display: flex;
-    align-items: center;
     justify-content: center;
 }
 
-.contact-content-centered {
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: center;
+/* Hidden Parallax Wrapper (Keep structure functioning but hidden visuals) */
+.contact-bg-parallax {
+    display: none;
 }
 
-.contact-title {
-    font-size: 2.5rem;
-    font-weight: 400;
-    color: #2C2C2C;
-    margin-bottom: 3rem;
-    font-family: 'DM Sans', serif;
-    letter-spacing: -0.02em;
-}
-
-/* Contact Info Pills */
-.contact-info-pills {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 3rem;
-    align-items: center;
-}
-
-.contact-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1.75rem;
-    background: white;
-    border: 1.5px solid #E0E0E0;
-    border-radius: 50px;
-    color: #4A4A4A;
-    font-size: 0.95rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    min-width: 320px;
-    justify-content: center;
-}
-
-.contact-pill:hover {
-    border-color: #1A3C25;
-    background: #FAFAFA;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.contact-pill svg {
-    color: #1A3C25;
-    flex-shrink: 0;
-}
-
-/* Contact Form - Minimal */
-.contact-form-minimal {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.form-row-minimal {
+.contact-container-split {
+    width: 100%;
+    max-width: 1000px;
+    /* Tighter container for simple look */
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 4rem;
+    align-items: flex-start;
+    /* Align top */
 }
 
-.contact-form-minimal input,
-.contact-form-minimal textarea {
-    padding: 1rem 1.5rem;
-    border: 1.5px solid #E0E0E0;
-    border-radius: 50px;
-    font-size: 0.95rem;
-    color: #2C2C2C;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.3s ease;
+/* LEFT: Info Side */
+.contact-visual-side {
+    color: #1A3C25;
+}
+
+.contact-title-large {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: #1A3C25;
+    background: none;
+    -webkit-text-fill-color: initial;
+    text-shadow: none;
+}
+
+.contact-subtitle-large {
+    font-size: 1rem;
+    color: #52665A;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+}
+
+/* Static Cards */
+.contact-cards-floating {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.glass-info-card {
     background: white;
-    outline: none;
-}
-
-.contact-form-minimal textarea {
-    border-radius: 24px;
-    resize: vertical;
-    min-height: 140px;
+    border: 1px solid #E0E5F2;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
     padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    /* Fill column width */
+    max-width: 400px;
+    backdrop-filter: none;
+    transform: none;
 }
 
-.contact-form-minimal input:focus,
-.contact-form-minimal textarea:focus {
-    border-color: #1A3C25;
-    box-shadow: 0 0 0 3px rgba(26, 60, 37, 0.08);
+.glass-info-card:hover {
+    border-color: #05CD99;
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
 }
 
-.contact-form-minimal input::placeholder,
-.contact-form-minimal textarea::placeholder {
-    color: #999;
+.info-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #E6F9F4;
+    /* Light green tint */
+    color: #05CD99;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-contact-minimal {
+.glass-info-card h4 {
+    display: none;
+    /* Hide label for cleaner look, just show data */
+}
+
+.glass-info-card a,
+.glass-info-card p {
+    color: #1A3C25;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    margin: 0;
+}
+
+/* RIGHT: Form Side */
+.contact-form-side {
+    width: 100%;
+}
+
+.glass-form-panel {
+    background: white;
+    border: 1px solid #E0E5F2;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    backdrop-filter: none;
+}
+
+.glass-form-panel::before {
+    display: none;
+}
+
+/* Remove shine */
+
+.form-header-glass {
+    border-bottom: none;
+    /* Cleaner header */
+    margin-bottom: 1.5rem;
+    padding-bottom: 0;
+}
+
+.form-header-glass h3 {
+    color: #1A3C25;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.leaf-deco {
+    display: none;
+}
+
+/* Simpler */
+
+/* Inputs */
+.glass-input-group {
+    margin-bottom: 1.25rem;
+}
+
+.glass-input-group input,
+.glass-input-group textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    background: #FCFCFD;
+    border: 1px solid #E0E5F2;
+    border-radius: 8px;
+    color: #1A3C25;
+    font-size: 0.95rem;
+}
+
+.glass-input-group label {
+    display: none;
+    /* Standard placeholder style (removing floating label complexity for simplicity) */
+}
+
+.glass-input-group input::placeholder,
+.glass-input-group textarea::placeholder {
+    color: #A3AED0;
+}
+
+.glass-input-group input:focus,
+.glass-input-group textarea:focus {
+    background: white;
+    border-color: #05CD99;
+    box-shadow: 0 0 0 3px rgba(5, 205, 153, 0.1);
+    padding: 0.85rem 1rem;
+    /* Reset padding change from floating label */
+}
+
+/* Button */
+.btn-glass-submit {
+    width: 100%;
+    padding: 0.85rem;
+    border-radius: 8px;
+    border: none;
     background: #1A3C25;
     color: white;
-    border: none;
-    padding: 1.1rem 2.5rem;
-    border-radius: 50px;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'DM Sans', sans-serif;
-    margin-top: 0.5rem;
-    align-self: center;
-    min-width: 200px;
-}
-
-.btn-contact-minimal:hover {
-    background: #0F2416;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(26, 60, 37, 0.25);
-}
-
-/* Contact Messages - Minimal */
-.contact-message-minimal {
-    margin-top: 1.5rem;
-    padding: 1rem 1.5rem;
-    border-radius: 50px;
-    display: inline-flex;
-    align-items: center;
+    display: flex;
     justify-content: center;
-    gap: 0.75rem;
-    font-size: 0.95rem;
-    font-weight: 500;
-    animation: slideIn 0.4s ease;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
 
-.success-message-minimal {
-    background: #E8F5E9;
-    border: 1.5px solid #4CAF50;
-    color: #2E7D32;
+.btn-glass-submit:hover {
+    background: #142E1C;
+    transform: translateY(-1px);
 }
 
-.success-message-minimal svg {
-    color: #2E7D32;
-    flex-shrink: 0;
-}
-
-.error-message-minimal {
-    background: #FFEBEE;
-    border: 1.5px solid #EF5350;
-    color: #C62828;
-}
-
-.error-message-minimal svg {
-    color: #C62828;
-    flex-shrink: 0;
-}
-
-/* Responsive Contact Section */
-@media (max-width: 768px) {
-    .contact-section {
-        padding: 4rem 1.5rem;
-    }
-
-    .contact-title {
-        font-size: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .contact-pill {
-        min-width: 280px;
-        font-size: 0.9rem;
-        padding: 0.75rem 1.5rem;
-    }
-
-    .form-row-minimal {
+/* Mobile */
+@media (max-width: 900px) {
+    .contact-container-split {
         grid-template-columns: 1fr;
+        gap: 3rem;
     }
 
-    .contact-form-minimal input,
-    .contact-form-minimal textarea {
-        font-size: 0.9rem;
+    .contact-visual-side {
+        text-align: center;
     }
 
-    .btn-contact-minimal {
-        width: 100%;
-        min-width: unset;
+    .contact-cards-floating {
+        align-items: center;
     }
 }
 
-@media (max-width: 480px) {
-    .contact-pill {
-        min-width: 100%;
-        font-size: 0.85rem;
-    }
-}
+
 
 .landing-footer {
     background: white;
@@ -1737,6 +1753,38 @@ body {
     from {
         opacity: 0;
         transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}/* Contact Toast Notification */
+.contact-toast {
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: var(--accent-green);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    font-weight: 600;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideUpToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.contact-toast.active {
+    display: flex;
+}
+
+@keyframes slideUpToast {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
 
     to {

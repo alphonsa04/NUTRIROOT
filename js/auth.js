@@ -118,6 +118,29 @@ window.closeModal = closeModal; // Make globally available for button onclick
    Authentication Functions
    ======================================== */
 
+/* ========================================
+   Validation Helpers
+   ======================================== */
+function validateEmail(email) {
+    const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return re.test(String(email).toLowerCase());
+}
+
+function validatePassword(password) {
+    // Firebase requires at least 6 chars
+    return password && password.length >= 6;
+}
+
+function validateName(name) {
+    // Check if name exists, has proper length, and contains only letters and spaces
+    const namePattern = /^[A-Za-z\s]+$/;
+    return name && name.trim().length >= 2 && name.trim().length <= 50 && namePattern.test(name.trim());
+}
+
+/* ========================================
+   Authentication Functions
+   ======================================== */
+
 // 1. Google Sign-In
 function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -155,6 +178,20 @@ function signInWithGoogle() {
 
 // 2. Email/Password Registration
 function registerWithEmail(fullName, email, password) {
+    // Client-side Validation
+    if (!validateName(fullName)) {
+        showModal('Invalid Name', 'Please enter a valid name (letters and spaces only, 2-50 characters).', 'error');
+        return;
+    }
+    if (!validateEmail(email)) {
+        showModal('Invalid Email', 'Please enter a valid email address.', 'error');
+        return;
+    }
+    if (!validatePassword(password)) {
+        showModal('Weak Password', 'Password must be at least 6 characters long.', 'error');
+        return;
+    }
+
     auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
             const user = userCredential.user;
@@ -196,6 +233,16 @@ function registerWithEmail(fullName, email, password) {
 
 // 3. Email/Password Login
 function signInWithEmail(email, password) {
+    // Client-side Validation
+    if (!validateEmail(email)) {
+        showModal('Invalid Email', 'Please enter a valid email address.', 'error');
+        return;
+    }
+    if (!password) {
+        showModal('Missing Password', 'Please enter your password.', 'error');
+        return;
+    }
+
     auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
             console.log('Login successful:', userCredential.user);
@@ -225,6 +272,12 @@ function signInWithEmail(email, password) {
 
 // 4. Password Reset
 function resetPassword(email) {
+    // Client-side Validation
+    if (!validateEmail(email)) {
+        showModal('Invalid Email', 'Please enter a valid email address.', 'error');
+        return;
+    }
+
     auth.sendPasswordResetEmail(email)
         .then(() => {
             const successMsg = document.getElementById('forgotSuccessMessage');

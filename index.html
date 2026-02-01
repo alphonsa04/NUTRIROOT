@@ -424,7 +424,7 @@
 
         <!-- Auth Buttons -->
         <div class="nav-auth-buttons">
-            <button onclick="openAuthModal('login')" class="btn-nav-login">Log In</button>
+            <button onclick="openAuthModal('register')" class="btn-nav-login">Register</button>
         </div>
 
         <!-- Mobile Menu Toggle -->
@@ -454,7 +454,7 @@
                     Enhance crop productivity while preserving soil health.
                 </p>
                 <div class="hero-buttons">
-                    <button onclick="openAuthModal('login')" class="btn-hero-primary">Start Monitoring</button>
+                    <button onclick="openAuthModal('register')" class="btn-hero-primary">Start Monitoring</button>
                     <button onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})"
                         class="btn-hero-outline">Learn More</button>
                 </div>
@@ -584,7 +584,9 @@
             </div>
             <form id="registerForm">
                 <div class="form-group">
-                    <input type="text" class="form-input" id="regName" placeholder="Full Name" required>
+                    <input type="text" class="form-input" id="regName" placeholder="Full Name" required
+                        pattern="[A-Za-z\s]+" title="Name should only contain letters and spaces" minlength="2"
+                        maxlength="50">
                 </div>
                 <div class="form-group">
                     <input type="email" class="form-input" id="regEmail" placeholder="Email address" required>
@@ -643,73 +645,129 @@
         </div>
     </div>
 
-    <!-- Contact Section -->
+    <!-- Contact Section - The Glass Greenhouse -->
     <section class="contact-section" id="contact">
-        <div class="contact-content-centered">
-            <h2 class="contact-title">Contact Us</h2>
+        <!-- Parallax Background -->
+        <div class="contact-bg-parallax">
+            <img src="assets/images/hero-field.png" alt="Field Background" class="parallax-img">
+            <div class="contact-overlay-gradient"></div>
+        </div>
 
-            <!-- Contact Info Pills -->
-            <div class="contact-info-pills">
-                <a href="tel:+15551234567" class="contact-pill">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path
-                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                        </path>
-                    </svg>
-                    +1 (555) 123-4567
-                </a>
+        <div class="contact-container-split">
+            <!-- Left Side: Visual & Info -->
+            <div class="contact-visual-side">
+                <div class="visual-content">
+                    <h2 class="contact-title-large">Let's Grow<br>Together</h2>
+                    <p class="contact-subtitle-large">Have a question about your soil health or need expert advice?
+                        Reach out to our agricultural specialists.</p>
 
-                <a href="mailto:support@nutriroot.com" class="contact-pill">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                    support@nutriroot.com
-                </a>
+                    <div class="contact-cards-floating">
+                        <div class="glass-info-card">
+                            <div class="info-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Call Us</h4>
+                                <a href="tel:+15551234567">+91 85905 30441</a>
+                            </div>
+                        </div>
 
-                <div class="contact-pill">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    123 Agriculture Lane, Green Valley, CA
+                        <div class="glass-info-card">
+                            <div class="info-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                    </path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Email Us</h4>
+                                <a href="mailto:alphonsaauguestine0406@gmail.com,alphonsaauguestine2028@mca.ajce.in"
+                                    style="font-size: 0.9rem; word-break: break-all;">
+                                    alphonsaauguestine0406@gmail.com<br>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="glass-info-card">
+                            <div class="info-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Chat on WhatsApp</h4>
+                                <a href="https://wa.me/918590530441?text=Hi%2C%20I%20need%20help%20with%20NutriRoot..."
+                                    target="_blank" rel="noopener noreferrer">Start Chat</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Contact Form -->
-            <form id="contactForm" class="contact-form-minimal">
-                <div class="form-row-minimal">
-                    <input type="text" id="contactName" name="name" placeholder="Your Name" required>
-                    <input type="email" id="contactEmail" name="email" placeholder="Your Email" required>
+            <!-- Right Side: Glass Form -->
+            <div class="contact-form-side">
+                <div class="glass-form-panel">
+                    <form id="contactForm">
+                        <div class="form-header-glass">
+                            <h3>Send Message</h3>
+                            <div class="leaf-deco">
+                                <img src="assets/images/tree-icon.png" alt="leaf" style="width: 24px; opacity: 0.8;">
+                            </div>
+                        </div>
+
+                        <div class="glass-input-group">
+                            <input type="text" id="contactName" required placeholder="Your Name" pattern="[A-Za-z\s]+"
+                                title="Name should only contain letters and spaces" minlength="2" maxlength="50">
+                            <label>Your Name</label>
+                        </div>
+
+                        <div class="glass-input-group">
+                            <input type="email" id="contactEmail" required placeholder="Email Address"
+                                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                                title="Please enter a valid email address">
+                            <label>Email Address</label>
+                        </div>
+
+                        <div class="glass-input-group">
+                            <input type="text" id="contactSubject" required placeholder="Subject" minlength="3"
+                                maxlength="100">
+                            <label>Subject</label>
+                        </div>
+
+                        <div class="glass-input-group">
+                            <textarea id="contactMessage" rows="4" required placeholder="Your Message" minlength="10"
+                                maxlength="1000"></textarea>
+                            <label>Your Message</label>
+                        </div>
+
+                        <button type="submit" class="btn-glass-submit">
+                            <span>Send Message</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- Custom Toast for this section -->
+                    <div id="contactToast" class="contact-toast">
+                        Message sent successfully! We'll be in touch.
+                    </div>
                 </div>
-
-                <input type="text" id="contactSubject" name="subject" placeholder="Subject" required>
-
-                <textarea id="contactMessage" name="message" rows="5" placeholder="Your Message" required></textarea>
-
-                <button type="submit" class="btn-contact-minimal">Send Message</button>
-            </form>
-
-            <!-- Success/Error Messages -->
-            <div id="contactSuccessMessage" class="contact-message-minimal success-message-minimal"
-                style="display: none;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                Thank you! Your message has been sent successfully.
-            </div>
-            <div id="contactErrorMessage" class="contact-message-minimal error-message-minimal" style="display: none;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-                Oops! Something went wrong. Please try again.
             </div>
         </div>
     </section>
-
 
     <!-- Footer -->
     <footer class="landing-footer">
@@ -1035,43 +1093,114 @@
             document.getElementById('crops').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Contact Form Handling
-        document.getElementById('contactForm').addEventListener('submit', function (e) {
-            e.preventDefault();
+        // --- NEW CONTACT FORM HANDLER (Firestore) ---
+        // Contact Form Submission - Wrapped in DOMContentLoaded to ensure Firebase is ready
+        document.addEventListener('DOMContentLoaded', function () {
+            const contactForm = document.getElementById('contactForm');
+            if (!contactForm) return;
 
-            // Get form values
-            const name = document.getElementById('contactName').value;
-            const email = document.getElementById('contactEmail').value;
-            const subject = document.getElementById('contactSubject').value;
-            const message = document.getElementById('contactMessage').value;
+            contactForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
 
-            // Hide any existing messages
-            document.getElementById('contactSuccessMessage').style.display = 'none';
-            document.getElementById('contactErrorMessage').style.display = 'none';
+                const btn = this.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>Sending...</span>';
+                btn.disabled = true;
 
-            // Simulate form submission (in a real app, this would be an API call)
-            // For now, we'll just show a success message
-            setTimeout(() => {
-                // Log the form data (in production, this would be sent to a server)
-                console.log('Contact Form Submission:', {
-                    name: name,
-                    email: email,
-                    subject: subject,
-                    message: message,
-                    timestamp: new Date().toISOString()
-                });
+                const name = document.getElementById('contactName').value.trim();
+                const email = document.getElementById('contactEmail').value.trim();
+                const subject = document.getElementById('contactSubject').value.trim();
+                const message = document.getElementById('contactMessage').value.trim();
 
-                // Show success message
-                document.getElementById('contactSuccessMessage').style.display = 'inline-flex';
+                // Validation
+                const namePattern = /^[A-Za-z\s]+$/;
+                const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
 
-                // Reset form
-                document.getElementById('contactForm').reset();
+                // Validate name (letters and spaces only)
+                if (!namePattern.test(name)) {
+                    alert('Please enter a valid name (letters and spaces only).');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
 
-                // Hide success message after 5 seconds
-                setTimeout(() => {
-                    document.getElementById('contactSuccessMessage').style.display = 'none';
-                }, 5000);
-            }, 500);
+                // Validate name length
+                if (name.length < 2 || name.length > 50) {
+                    alert('Name must be between 2 and 50 characters.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Validate email
+                if (!emailPattern.test(email)) {
+                    alert('Please enter a valid email address.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Validate subject
+                if (subject.length < 3 || subject.length > 100) {
+                    alert('Subject must be between 3 and 100 characters.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Validate message
+                if (message.length < 10 || message.length > 1000) {
+                    alert('Message must be between 10 and 1000 characters.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Hide any existing messages (if any exist in DOM)
+                const successToast = document.getElementById('contactToast');
+                if (successToast) successToast.classList.remove('active');
+
+                try {
+                    // Check if db is available
+                    if (typeof db === 'undefined') {
+                        throw new Error('Firebase is not initialized yet. Please refresh the page.');
+                    }
+
+                    // Add to Firestore
+                    await db.collection('messages').add({
+                        name: name,
+                        email: email,
+                        subject: subject,
+                        message: message,
+                        read: false, // Mark as unread for admin
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Show success message
+                    if (successToast) {
+                        successToast.style.display = 'block';
+                        successToast.classList.add('active'); // assuming active class for animation if exists
+
+                        // Hide after delay
+                        setTimeout(() => {
+                            successToast.style.display = 'none';
+                            successToast.classList.remove('active');
+                        }, 5000);
+                    } else {
+                        alert('Message sent successfully!');
+                    }
+
+                    // Reset form
+                    document.getElementById('contactForm').reset();
+
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert('Failed to send message. Please try again.');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
         });
     </script>
 </body>
