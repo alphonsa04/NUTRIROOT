@@ -140,21 +140,24 @@
                         <div class="input-group">
                             <label for="modal_nitrogen">Nitrogen <span class="unit">(N)</span></label>
                             <div class="input-wrapper">
-                                <input type="number" step="0.1" id="modal_nitrogen" required placeholder="0.0">
+                                <input type="number" step="0.1" id="modal_nitrogen" required placeholder="0.0" min="0"
+                                    max="500">
                                 <span class="input-suffix">mg/kg</span>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="modal_phosphorus">Phosphorus <span class="unit">(P)</span></label>
                             <div class="input-wrapper">
-                                <input type="number" step="0.1" id="modal_phosphorus" required placeholder="0.0">
+                                <input type="number" step="0.1" id="modal_phosphorus" required placeholder="0.0" min="0"
+                                    max="50">
                                 <span class="input-suffix">mg/kg</span>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="modal_potassium">Potassium <span class="unit">(K)</span></label>
                             <div class="input-wrapper">
-                                <input type="number" step="0.1" id="modal_potassium" required placeholder="0.0">
+                                <input type="number" step="0.1" id="modal_potassium" required placeholder="0.0" min="0"
+                                    max="500">
                                 <span class="input-suffix">mg/kg</span>
                             </div>
                         </div>
@@ -164,21 +167,24 @@
                         <div class="input-group">
                             <label for="modal_ph">Soil pH</label>
                             <div class="input-wrapper">
-                                <input type="number" step="0.01" id="modal_ph" required placeholder="7.00">
+                                <input type="number" step="0.01" id="modal_ph" required placeholder="7.00" min="0"
+                                    max="14">
                                 <span class="input-suffix">pH</span>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="modal_moisture">Moisture</label>
                             <div class="input-wrapper">
-                                <input type="number" step="0.1" id="modal_moisture" required placeholder="0.0">
+                                <input type="number" step="0.1" id="modal_moisture" required placeholder="0.0" min="0"
+                                    max="100">
                                 <span class="input-suffix">%</span>
                             </div>
                         </div>
                         <div class="input-group">
                             <label for="modal_temperature">Temperature</label>
                             <div class="input-wrapper">
-                                <input type="number" step="0.1" id="modal_temperature" required placeholder="25.0">
+                                <input type="number" step="0.1" id="modal_temperature" required placeholder="25.0"
+                                    min="-20" max="60">
                                 <span class="input-suffix">°C</span>
                             </div>
                         </div>
@@ -424,6 +430,36 @@
                 temperature: parseFloat(document.getElementById('modal_temperature').value),
                 crop: document.getElementById('modal_crop').value
             };
+
+            // 2. Validate Agricultural Ranges
+            if (data.nitrogen < 0 || data.nitrogen > 500) {
+                showMessage('Nitrogen must be between 0 and 500 mg/kg.', 'error');
+                return;
+            }
+            if (data.phosphorus < 0 || data.phosphorus > 50) {
+                showMessage('Phosphorus must be between 0 and 50 mg/kg.', 'error');
+                return;
+            }
+            if (data.potassium < 0 || data.potassium > 500) {
+                showMessage('Potassium must be between 0 and 500 mg/kg.', 'error');
+                return;
+            }
+            if (data.ph < 0 || data.ph > 14) {
+                showMessage('pH level must be between 0 and 14.', 'error');
+                return;
+            }
+            if (data.moisture < 0 || data.moisture > 100) {
+                showMessage('Moisture must be between 0 and 100%.', 'error');
+                return;
+            }
+            if (data.temperature < -20 || data.temperature > 60) {
+                showMessage('Temperature must be between -20°C and 60°C.', 'error');
+                return;
+            }
+            if (!data.crop) {
+                showMessage('Please select a target crop.', 'error');
+                return;
+            }
 
             const saved = await saveSoilData(data);
             if (saved) {

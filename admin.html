@@ -14,9 +14,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin-auth.js"></script>
-    <script src="js/admin-analytics.js"></script>
-    <script src="js/admin-crops.js"></script>
-    <script src="js/admin-users.js"></script>
 </head>
 
 <body>
@@ -45,8 +42,8 @@
 
             <div id="profileMenu" class="dropdown-menu">
                 <div class="dropdown-header">
-                    <span class="user-name" id="adminUserName">Admin</span>
-                    <span class="user-email" id="adminUserEmail">admin@example.com</span>
+                    <span class="user-name" id="dropdownUserName">Admin</span>
+                    <span class="user-email" id="dropdownUserEmail">admin@example.com</span>
                 </div>
                 <a href="dashboard.html" class="dropdown-item">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -234,7 +231,36 @@
             </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Recent Submissions Table -->
+        <div class="admin-table-container" style="margin-top: 2rem;">
+            <div class="admin-table-header">
+                <h2 class="admin-table-title">Recent Submissions</h2>
+                <a href="admin-analytics.html" class="btn btn-outline"
+                    style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">View All</a>
+            </div>
+            <div class="admin-table-wrapper" style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>pH</th>
+                            <th>N-P-K</th>
+                            <th>Recommendation</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentSubmissionsBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--secondary-color);">
+                                Loading latest submissions...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- System Status -->
         <div class="admin-table-container" style="margin-top: 2rem;">
             <div class="admin-table-header">
                 <h2 class="admin-table-title">System Status</h2>
@@ -248,52 +274,101 @@
     <script>
         // Load dashboard statistics
         async function loadDashboardStats() {
+            if (typeof db === 'undefined') {
+                console.error('Firestore (db) is not initialized');
+                document.getElementById('systemStatus').innerHTML = '<p style="color: #EE5D50;">Database connection error. Please refresh.</p>';
+                return;
+            }
+
+            console.log('Fetching dashboard statistics...');
+            const statusDiv = document.getElementById('systemStatus');
+            statusDiv.innerHTML = '<p style="color: var(--secondary-color);">Syncing data from Firestore...</p>';
+
+            // 1. Fetch Users & Admin Count
             try {
-                // Count total users
                 const usersSnapshot = await db.collection('users').get();
-                document.getElementById('totalUsers').textContent = usersSnapshot.size;
+                const totalUsers = usersSnapshot.size;
+                document.getElementById('totalUsers').textContent = totalUsers;
 
-                // Count total crops
-                const cropsSnapshot = await db.collection('crops').get();
-                document.getElementById('totalCrops').textContent = cropsSnapshot.size;
-
-                // Count admin users
                 const adminUsers = usersSnapshot.docs.filter(doc => doc.data().role === 'admin');
                 document.getElementById('adminCount').textContent = adminUsers.length;
-
-                // Update system status
-                const statusDiv = document.getElementById('systemStatus');
-                statusDiv.innerHTML = `
-                    <div style="display: grid; gap: 0.75rem;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%;"></div>
-                            <span style="color: var(--primary-color); font-weight: 500;">Database Connected</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%;"></div>
-                            <span style="color: var(--primary-color); font-weight: 500;">Authentication Active</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%;"></div>
-                            <span style="color: var(--primary-color); font-weight: 500;">Security Rules Updated</span>
-                        </div>
-                    </div>
-                `;
-
-                console.log('Dashboard stats loaded successfully');
-            } catch (error) {
-                console.error('Error loading dashboard stats:', error);
-                document.getElementById('systemStatus').innerHTML = `
-                    <p style="color: var(--accent-red);">Error loading system status. Please refresh the page.</p>
-                `;
+                console.log('Users sync complete:', totalUsers);
+            } catch (err) {
+                console.error('Error fetching users:', err);
+                document.getElementById('totalUsers').textContent = 'Error';
             }
+
+            // 2. Fetch Crops
+            try {
+                const cropsSnapshot = await db.collection('crops').get();
+                document.getElementById('totalCrops').textContent = cropsSnapshot.size;
+                console.log('Crops sync complete:', cropsSnapshot.size);
+            } catch (err) {
+                console.error('Error fetching crops:', err);
+                document.getElementById('totalCrops').textContent = 'Error';
+            }
+
+            // 3. Fetch Submissions (CollectionGroup requires index)
+            try {
+                const submissionsSnapshot = await db.collectionGroup('readings').get();
+                document.getElementById('totalSubmissions').textContent = submissionsSnapshot.size;
+                console.log('Submissions sync complete:', submissionsSnapshot.size);
+            } catch (err) {
+                console.warn('Submissions fetch failed (likely missing index):', err);
+                document.getElementById('totalSubmissions').textContent = 'N/A';
+
+                if (err.message && err.message.includes('requires an index')) {
+                    console.info('Firestore index needed for Submissions. Check console for link.');
+                }
+            }
+
+            // 4. Fetch Recent Submissions (Details)
+            try {
+                const recentSnapshot = await db.collectionGroup('readings')
+                    .orderBy('timestamp', 'desc')
+                    .limit(5)
+                    .get();
+
+                const recentBody = document.getElementById('recentSubmissionsBody');
+                if (recentSnapshot.empty) {
+                    recentBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 1.5rem;">No submissions found yet.</td></tr>';
+                } else {
+                    recentBody.innerHTML = recentSnapshot.docs.map(doc => {
+                        const d = doc.data();
+                        const date = d.timestamp ? (d.timestamp.toDate ? d.timestamp.toDate().toLocaleDateString() : new Date(d.timestamp).toLocaleDateString()) : 'N/A';
+                        return `
+                            <tr>
+                                <td>${date}</td>
+                                <td><span style="font-weight: 600; color: #1A3C25;">${d.ph || 'N/A'}</span></td>
+                                <td><span style="color: var(--secondary-color);">${d.nitrogen || 0}-${d.phosphorus || 0}-${d.potassium || 0}</span></td>
+                                <td>${d.recommendedCrop || 'N/A'}</td>
+                                <td><span class="role-badge farmer">${Math.round(d.matchScore || 0)}%</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+                console.log('Recent submissions synced');
+            } catch (err) {
+                console.warn('Recent submissions fetch failed:', err);
+                document.getElementById('recentSubmissionsBody').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: #EE5D50;">Missing index for detailed view. Click the link in console.</td></tr>';
+            }
+
+            // Final status update
+            statusDiv.innerHTML = `
+                <div style="display: grid; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 8px; height: 8px; background: #05CD99; border-radius: 50%;"></div>
+                        <span style="color: var(--primary-color); font-weight: 500;">Real-time sync active</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: var(--secondary-color); font-size: 0.85rem;">Last update: ${new Date().toLocaleTimeString()}</span>
+                    </div>
+                </div>
+            `;
         }
 
-        // Load stats when page loads
-        window.addEventListener('load', () => {
-            // Wait for Firebase to initialize
-            setTimeout(loadDashboardStats, 1000);
-        });
+        // Expose to window for the admin-auth script to call after verification
+        window.loadDashboardStats = loadDashboardStats;
     </script>
 </body>
 

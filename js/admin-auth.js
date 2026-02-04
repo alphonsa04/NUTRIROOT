@@ -60,8 +60,8 @@ function checkAdminAccess() {
  */
 function updateAdminUI(user, userData) {
     // Update profile dropdown if it exists
-    const nameEl = document.getElementById('adminUserName');
-    const emailEl = document.getElementById('adminUserEmail');
+    const nameEl = document.getElementById('dropdownUserName');
+    const emailEl = document.getElementById('dropdownUserEmail');
 
     if (nameEl) {
         nameEl.textContent = userData.name || user.displayName || 'Admin';
@@ -69,6 +69,12 @@ function updateAdminUI(user, userData) {
 
     if (emailEl) {
         emailEl.textContent = user.email;
+    }
+
+    // NEW: Trigger dashboard stats if on the overview page
+    if (typeof window.loadDashboardStats === 'function') {
+        console.log('Admin verified: Triggering stats fetching...');
+        window.loadDashboardStats();
     }
 }
 

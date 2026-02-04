@@ -268,7 +268,7 @@ function closeDeleteModal() {
     deleteTargetId = null;
 }
 
-confirmDeleteBtn.onclick = async () => {
+if (confirmDeleteBtn) confirmDeleteBtn.onclick = async () => {
     if (!deleteTargetId) return;
 
     try {
