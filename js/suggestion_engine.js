@@ -107,20 +107,14 @@ const SuggestionEngine = {
                 reasons.push("Moisture level is ideal");
             }
 
-            // 4. Temperature Score (15% weight)
-            const temp = getRange('temperature');
-            if (soilData.temperature < temp[0]) {
-                const diff = temp[0] - soilData.temperature;
-                const penalty = Math.min(diff * 2, 15);
+            // 5. EC Score (Salinity) (10% weight - bonus/penalty)
+            const ec = soilData.ec || 0;
+            if (ec > 2.5) {
+                const penalty = Math.min((ec - 2.5) * 10, 20);
                 score -= penalty;
-                if (penalty > 3) reasons.push("Temperature is too low");
-            } else if (soilData.temperature > temp[1]) {
-                const diff = soilData.temperature - temp[1];
-                const penalty = Math.min(diff * 2, 15);
-                score -= penalty;
-                if (penalty > 3) reasons.push("Temperature is too high");
-            } else {
-                reasons.push("Temperature is optimal");
+                if (penalty > 5) reasons.push("Salinity (EC) is too high");
+            } else if (ec > 0.8 && ec <= 2.0) {
+                reasons.push("Optimal soil salinity");
             }
 
             return {
