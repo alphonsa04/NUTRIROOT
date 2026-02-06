@@ -1,14 +1,15 @@
 /**
  * AI Chatbot for NutriRoot
- * Powered by Gemini 1.5 Flash
+ * Powered by Groq (Llama 3)
  */
 
 const AIChatbot = {
     // Configuration - Note: In a production app, the API key should be handled via a backend proxy
     // For this demonstration, we'll look for a key in local storage or use a placeholder if not provided
     config: {
-        apiKey: localStorage.getItem('GEMINI_API_KEY') || '',
-        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        apiKey: localStorage.getItem('GROQ_API_KEY') || '',
+        endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+        model: 'llama-3.3-70b-versatile',
         systemPrompt: `You are NutriRoot AI, an expert Agronomist and Soil Health assistant. 
         Your goal is to provide intelligent assistance on soil health, fertilizer management, crop cultivation, and sustainable agriculture.
         
@@ -64,7 +65,7 @@ const AIChatbot = {
                             </div>
                             <div class="header-title">
                                 <h3>NutriRoot AI</h3>
-                                <p>Agronomy Assistant</p>
+                                <p>Powered by Groq</p>
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px;">
@@ -121,8 +122,8 @@ const AIChatbot = {
         const resetBtn = document.getElementById('resetKeyBtn');
         if (resetBtn) {
             resetBtn.onclick = () => {
-                if (confirm("Reset Gemini API Key? You will need to enter a new one.")) {
-                    localStorage.removeItem('GEMINI_API_KEY');
+                if (confirm("Reset Groq API Key? You will need to enter a new one.")) {
+                    localStorage.removeItem('GROQ_API_KEY');
                     this.config.apiKey = '';
                     location.reload();
                 }
@@ -207,11 +208,11 @@ const AIChatbot = {
     async getAIResponse(userText) {
         if (!this.config.apiKey) {
             this.addMessage("ai", `
-                <strong>I need a Gemini API Key to function.</strong><br><br>
-                1. Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--chatbot-secondary);">Google AI Studio</a> to get your free key.<br>
+                <strong>I need a Groq API Key to function.</strong><br><br>
+                1. Go to <a href="https://console.groq.com/keys" target="_blank" style="color: var(--chatbot-secondary);">Groq Cloud Console</a> to get your free key.<br>
                 2. Enter it below and click Save.<br><br>
                 <div style="display: flex; gap: 8px;">
-                    <input type="password" id="key-input" placeholder="Paste API Key here..." style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <input type="password" id="key-input" placeholder="Paste Groq Key here..." style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0;">
                     <button id="save-key-btn" style="background: var(--chatbot-secondary); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Save</button>
                 </div>
             `);
@@ -224,7 +225,7 @@ const AIChatbot = {
                     saveBtn.onclick = () => {
                         const newKey = keyInput.value.trim();
                         if (newKey) {
-                            localStorage.setItem('GEMINI_API_KEY', newKey);
+                            localStorage.setItem('GROQ_API_KEY', newKey);
                             this.config.apiKey = newKey;
                             this.addMessage("ai", "API Key saved! You can now start chatting.");
                         }
@@ -245,56 +246,41 @@ const AIChatbot = {
                 contextText = `[USER SOIL DATA]: Target Crop: ${latestSoil.crop}, N: ${latestSoil.nitrogen}, P: ${latestSoil.phosphorus}, K: ${latestSoil.potassium}, pH: ${latestSoil.ph}, EC: ${latestSoil.ec || 'N/A'}, Moisture: ${latestSoil.moisture}%, Temp: ${latestSoil.temperature}°C. Recorded on: ${new Date(latestSoil.timestamp).toLocaleDateString()}.\n\n`;
             }
 
-            const prompt = `${this.config.systemPrompt}\n\n${contextText}User Question: ${userText}`;
-
-            const response = await fetch(`${this.config.endpoint}?key=${this.config.apiKey}`, {
+            const response = await fetch(this.config.endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.config.apiKey}`
+                },
                 body: JSON.stringify({
-                    contents: [
-                        { role: 'user', parts: [{ text: prompt }] }
+                    messages: [
+                        { role: 'system', content: this.config.systemPrompt },
+                        { role: 'user', content: contextText + userText }
                     ],
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 800,
-                    }
+                    model: this.config.model,
+                    temperature: 0.7,
+                    max_tokens: 800,
                 })
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("Gemini API Error:", errorData);
-                // --- NEW QUOTA FALLBACK LOGIC ---
-                if (response.status === 429) {
-                    if (this.config.endpoint.includes('gemini-2.0-flash:generateContent')) {
-                        console.log("Quota exceeded for 2.0 Flash, trying 2.0 Flash Lite...");
-                        this.config.endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
-                        return this.getAIResponse(userText);
-                    } else if (this.config.endpoint.includes('gemini-2.0-flash-lite:generateContent')) {
-                        console.log("Quota exceeded for Lite, trying Flash Latest...");
-                        this.config.endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
-                        return this.getAIResponse(userText);
-                    }
+                console.error("Groq API Error:", errorData);
 
+                if (response.status === 429) {
                     this.showTyping(false);
                     this.addMessage("ai", `
-                        <strong>API Quota Exceeded.</strong> You've sent too many messages today.<br><br>
-                        1. <strong>Wait</strong>: Google resets free limits every few hours.<br>
-                        2. <strong>Switch Key</strong>: <button onclick="localStorage.removeItem('GEMINI_API_KEY'); location.reload();" style="background: var(--chatbot-secondary); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;">Click here to Reset & Use a New API Key</button><br><br>
-                        <small>Tip: You can get a fresh key from <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--chatbot-secondary);">Google AI Studio</a> using a different Gmail account.</small>
+                        <strong>Groq API limit reached.</strong><br><br>
+                        1. <strong>Wait</strong>: Free keys have rate limits.<br>
+                        2. <strong>Switch Key</strong>: <button onclick="localStorage.removeItem('GROQ_API_KEY'); location.reload();" style="background: var(--chatbot-secondary); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;">Click here to Reset & Use a New Key</button><br><br>
+                        <small>Tip: You can get a fresh key from <a href="https://console.groq.com/keys" target="_blank" style="color: var(--chatbot-secondary);">Groq Console</a>.</small>
                     `);
                     return;
                 }
 
-                let errorMsg = "I'm having trouble connecting.";
+                let errorMsg = "I'm having trouble connecting to Groq.";
                 if (errorData.error) {
-                    if (errorData.error.status === 'PERMISSION_DENIED') {
-                        errorMsg = "<strong>Invalid API Key.</strong> Please check your key and try setting it again.";
-                    } else if (errorData.error.message && errorData.error.message.includes('not found')) {
-                        errorMsg = `<strong>Model Error:</strong> The model wasn't recognized. Your API key might not have access to this version yet.`;
-                    } else if (errorData.error.message) {
-                        errorMsg = `<strong>API Error:</strong> ${errorData.error.message}`;
-                    }
+                    errorMsg = `<strong>API Error:</strong> ${errorData.error.message}`;
                 }
 
                 this.addMessage("ai", errorMsg);
@@ -305,12 +291,12 @@ const AIChatbot = {
             const data = await response.json();
             this.showTyping(false);
 
-            if (data.candidates && data.candidates[0].content) {
-                const aiResponse = data.candidates[0].content.parts[0].text;
+            if (data.choices && data.choices[0].message) {
+                const aiResponse = data.choices[0].message.content;
                 this.addMessage("ai", aiResponse);
             } else {
-                console.error("Unexpected Gemini Content:", data);
-                this.addMessage("ai", "I'm having trouble reading the response. Your prompt might have been blocked or the API structure changed.");
+                console.error("Unexpected Groq Response:", data);
+                this.addMessage("ai", "I'm having trouble reading the response from Groq.");
             }
         } catch (error) {
             console.error("Chatbot Fetch Error:", error);
