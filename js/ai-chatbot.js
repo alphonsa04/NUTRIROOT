@@ -264,17 +264,34 @@ const AIChatbot = {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Gemini API Error:", errorData);
-                let errorMsg = "I'm having trouble connecting.";
-
+                // --- NEW QUOTA FALLBACK LOGIC ---
                 if (response.status === 429) {
-                    errorMsg = `<strong>API Quota Exceeded.</strong> You've sent too many messages today.<br><br>
-                    1. Wait for it to reset (usually a few hours).<br>
-                    2. Or <button onclick="localStorage.removeItem('GEMINI_API_KEY'); location.reload();" style="background: var(--chatbot-secondary); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Click here to try a different API Key</button>`;
-                } else if (errorData.error) {
+                    if (this.config.endpoint.includes('gemini-2.0-flash:generateContent')) {
+                        console.log("Quota exceeded for 2.0 Flash, trying 2.0 Flash Lite...");
+                        this.config.endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
+                        return this.getAIResponse(userText);
+                    } else if (this.config.endpoint.includes('gemini-2.0-flash-lite:generateContent')) {
+                        console.log("Quota exceeded for Lite, trying Flash Latest...");
+                        this.config.endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
+                        return this.getAIResponse(userText);
+                    }
+
+                    this.showTyping(false);
+                    this.addMessage("ai", `
+                        <strong>API Quota Exceeded.</strong> You've sent too many messages today.<br><br>
+                        1. <strong>Wait</strong>: Google resets free limits every few hours.<br>
+                        2. <strong>Switch Key</strong>: <button onclick="localStorage.removeItem('GEMINI_API_KEY'); location.reload();" style="background: var(--chatbot-secondary); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;">Click here to Reset & Use a New API Key</button><br><br>
+                        <small>Tip: You can get a fresh key from <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--chatbot-secondary);">Google AI Studio</a> using a different Gmail account.</small>
+                    `);
+                    return;
+                }
+
+                let errorMsg = "I'm having trouble connecting.";
+                if (errorData.error) {
                     if (errorData.error.status === 'PERMISSION_DENIED') {
                         errorMsg = "<strong>Invalid API Key.</strong> Please check your key and try setting it again.";
                     } else if (errorData.error.message && errorData.error.message.includes('not found')) {
-                        errorMsg = `<strong>Model Error:</strong> The model 'gemini-2.0-flash' wasn't recognized. Your API key might not have access to this specific version yet.`;
+                        errorMsg = `<strong>Model Error:</strong> The model wasn't recognized. Your API key might not have access to this version yet.`;
                     } else if (errorData.error.message) {
                         errorMsg = `<strong>API Error:</strong> ${errorData.error.message}`;
                     }
