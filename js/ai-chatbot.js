@@ -246,6 +246,12 @@ const AIChatbot = {
                 contextText = `[USER SOIL DATA]: Target Crop: ${latestSoil.crop}, N: ${latestSoil.nitrogen}, P: ${latestSoil.phosphorus}, K: ${latestSoil.potassium}, pH: ${latestSoil.ph}, EC: ${latestSoil.ec || 'N/A'}, Moisture: ${latestSoil.moisture}%, Temp: ${latestSoil.temperature}°C. Recorded on: ${new Date(latestSoil.timestamp).toLocaleDateString()}.\n\n`;
             }
 
+            // Add weather context if available
+            const weatherContext = this.getWeatherContext();
+            if (weatherContext) {
+                contextText += `[CURRENT WEATHER]: Location: ${weatherContext.location}, Temperature: ${weatherContext.temperature}°C, Condition: ${weatherContext.condition}, Humidity: ${weatherContext.humidity}%, Wind: ${weatherContext.windSpeed} km/h, UV Index: ${weatherContext.uvIndex}, Rain Chance: ${weatherContext.rainChance}%.\n\n`;
+            }
+
             const response = await fetch(this.config.endpoint, {
                 method: 'POST',
                 headers: {
@@ -312,6 +318,20 @@ const AIChatbot = {
         try {
             if (typeof getLatestSoilData === 'function') {
                 return await getLatestSoilData();
+            }
+            return null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    /**
+     * Helper to get weather context for AI
+     */
+    getWeatherContext() {
+        try {
+            if (typeof WeatherService !== 'undefined' && typeof WeatherService.getWeatherContext === 'function') {
+                return WeatherService.getWeatherContext();
             }
             return null;
         } catch (e) {
