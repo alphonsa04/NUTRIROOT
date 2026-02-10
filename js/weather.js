@@ -154,14 +154,32 @@ const WeatherService = {
                     </svg>
                     <span>${location.name}, ${location.region}</span>
                 </div>
-                <button class="weather-refresh" onclick="WeatherService.refreshWeather()" title="Refresh Weather">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 2v6h-6"></path>
-                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-                        <path d="M3 22v-6h6"></path>
-                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-                    </svg>
-                </button>
+                <div class="weather-controls">
+                    <button class="weather-location-btn" onclick="WeatherService.requestLiveLocation()" title="Use Live Location">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <line x1="12" y1="2" x2="12" y2="6"></line>
+                            <line x1="12" y1="18" x2="12" y2="22"></line>
+                            <line x1="2" y1="12" x2="6" y2="12"></line>
+                            <line x1="18" y1="12" x2="22" y2="12"></line>
+                        </svg>
+                    </button>
+                    <button class="weather-search-btn" onclick="WeatherService.showLocationSearch()" title="Search Location">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                    <button class="weather-refresh" onclick="WeatherService.refreshWeather()" title="Refresh Weather">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 2v6h-6"></path>
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                            <path d="M3 22v-6h6"></path>
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="weather-current">
@@ -296,6 +314,119 @@ const WeatherService = {
      * Refresh weather data
      */
     async refreshWeather() {
+        localStorage.removeItem(this.config.cacheKey);
+        await this.fetchWeather();
+    },
+
+    /**
+     * Request live location from browser
+     */
+    async requestLiveLocation() {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+
+        // Clear saved location to force new request
+        localStorage.removeItem('nutriroot_location');
+
+        // Show loading state
+        const container = document.getElementById('weatherWidget');
+        if (container) {
+            const originalContent = container.innerHTML;
+            container.innerHTML = `
+                <div class="weather-loading">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="loading-spinner">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                    </svg>
+                    <p>Requesting location permission...</p>
+                </div>
+            `;
+        }
+
+        // Request location
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const coords = `${position.coords.latitude},${position.coords.longitude}`;
+                localStorage.setItem('nutriroot_location', coords);
+                localStorage.removeItem(this.config.cacheKey);
+                await this.fetchWeather();
+            },
+            (error) => {
+                alert("Location access denied. Please allow location access in your browser settings or use the search option.");
+                // Restore weather display
+                this.init();
+            }
+        );
+    },
+
+    /**
+     * Show location search modal
+     */
+    showLocationSearch() {
+        const container = document.getElementById('weatherWidget');
+        if (!container) return;
+
+        const currentLocation = localStorage.getItem('nutriroot_location') || '';
+
+        const searchHTML = `
+            <div class="weather-search-modal">
+                <h3>Search Location</h3>
+                <p>Enter a city name, postal code, or coordinates (lat,lon)</p>
+                <div class="location-search-input">
+                    <input type="text" id="locationSearchInput" placeholder="e.g., London, 10001, or 51.5074,-0.1278" value="${currentLocation}">
+                    <div class="search-actions">
+                        <button onclick="WeatherService.searchLocation()" class="btn-search">Search</button>
+                        <button onclick="WeatherService.init()" class="btn-cancel">Cancel</button>
+                    </div>
+                </div>
+                <div class="search-examples">
+                    <p><strong>Examples:</strong></p>
+                    <ul>
+                        <li>City: <code onclick="document.getElementById('locationSearchInput').value='Mumbai, India'">Mumbai, India</code></li>
+                        <li>Postal: <code onclick="document.getElementById('locationSearchInput').value='10001'">10001</code></li>
+                        <li>Coords: <code onclick="document.getElementById('locationSearchInput').value='19.0760,72.8777'">19.0760,72.8777</code></li>
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = searchHTML;
+
+        // Focus input
+        setTimeout(() => {
+            const input = document.getElementById('locationSearchInput');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 100);
+
+        // Add Enter key support
+        const input = document.getElementById('locationSearchInput');
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.searchLocation();
+                }
+            });
+        }
+    },
+
+    /**
+     * Search for location and update weather
+     */
+    async searchLocation() {
+        const input = document.getElementById('locationSearchInput');
+        const location = input ? input.value.trim() : '';
+
+        if (!location) {
+            alert("Please enter a location.");
+            return;
+        }
+
+        // Save location and refresh
+        localStorage.setItem('nutriroot_location', location);
         localStorage.removeItem(this.config.cacheKey);
         await this.fetchWeather();
     },
