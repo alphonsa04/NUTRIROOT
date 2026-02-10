@@ -5,7 +5,7 @@
 
 const WeatherService = {
     config: {
-        apiKey: localStorage.getItem('WEATHER_API_KEY') || '',
+        apiKey: localStorage.getItem('WEATHER_API_KEY') || '6abe9686a74841adbec170504261002',
         endpoint: 'https://api.weatherapi.com/v1',
         cacheKey: 'nutriroot_weather_cache',
         cacheDuration: 30 * 60 * 1000, // 30 minutes
@@ -73,13 +73,9 @@ const WeatherService = {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("WeatherAPI Error:", errorData);
-                console.error("Response Status:", response.status);
-                console.error("API Endpoint:", `${this.config.endpoint}/forecast.json?key=${this.config.apiKey.substring(0, 8)}...&q=${location}&days=3&aqi=no`);
 
                 if (response.status === 401 || response.status === 403) {
                     this.showApiKeyPrompt("Invalid API Key. Please check your key and try again.");
-                } else if (response.status === 400) {
-                    this.showError(`Invalid location: "${location}". Please use the search button to enter a valid location.`);
                 } else {
                     this.showError("Unable to fetch weather data. Please try again later.");
                 }
