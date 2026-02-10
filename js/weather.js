@@ -66,15 +66,20 @@ const WeatherService = {
             const location = await this.getLocation();
 
             // Fetch current weather and forecast
-            const response = await fetch(
-                `${this.config.endpoint}/forecast.json?key=${this.config.apiKey}&q=${location}&days=3&aqi=no`
-            );
+            const apiUrl = `${this.config.endpoint}/forecast.json?key=${this.config.apiKey}&q=${location}&days=3&aqi=no`;
+            console.log("WeatherService: Fetching from", apiUrl);
+
+            const response = await fetch(apiUrl);
 
             if (!response.ok) {
+                console.error("WeatherAPI Status:", response.status, response.statusText);
                 const errorData = await response.json();
                 console.error("WeatherAPI Error:", errorData);
 
-                if (response.status === 401 || response.status === 403) {
+                if (response.status === 400 && errorData.error && errorData.error.code === 1006) {
+                    this.showError(`Location "${location}" not found. Please try searching for a nearby city.`);
+                    this.showLocationSearch();
+                } else if (response.status === 401 || response.status === 403) {
                     this.showApiKeyPrompt("Invalid API Key. Please check your key and try again.");
                 } else {
                     this.showError("Unable to fetch weather data. Please try again later.");
