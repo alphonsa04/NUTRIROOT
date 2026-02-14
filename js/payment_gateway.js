@@ -129,7 +129,54 @@ const PaymentGateway = {
     },
 
     /**
-     * Start the Razorpay payment process
+     * Start the Razorpay payment process for Shop
+     */
+    startShopPayment(amount, itemCount, callback) {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            alert("Please log in to purchase items.");
+            return;
+        }
+
+        const options = {
+            "key": this.RAZORPAY_KEY,
+            "amount": amount * 100, // Amount in paise
+            "currency": "INR",
+            "name": "NutriRoot Shop",
+            "description": `Purchase of ${itemCount} items`,
+            "image": "assets/images/tree-logo.png",
+            "handler": function (response) {
+                console.log("Payment Successful:", response.razorpay_payment_id);
+                if (callback) callback(response.razorpay_payment_id);
+            },
+            "prefill": {
+                "name": user.displayName || "Valued Customer",
+                "email": user.email || ""
+            },
+            "theme": {
+                "color": "#1A3C25"
+            },
+            "modal": {
+                "ondismiss": function () {
+                    console.log("Checkout form closed by user");
+                }
+            }
+        };
+
+        if (typeof Razorpay === 'undefined') {
+            alert("Razorpay SDK not loaded. Please check your internet connection.");
+            return;
+        }
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            alert("Payment Failed: " + response.error.description);
+        });
+        rzp.open();
+    },
+
+    /**
+     * Start the Razorpay payment process (Generic/Premium)
      */
     startPayment(feature, amount, callback) {
         const user = firebase.auth().currentUser;
@@ -144,7 +191,7 @@ const PaymentGateway = {
             "image": "assets/images/tree-logo.png",
             "handler": function (response) {
                 console.log("Payment Successful:", response.razorpay_payment_id);
-                if (callback) callback();
+                if (callback) callback(response.razorpay_payment_id);
             },
             "prefill": {
                 "name": user.displayName || "Farmer",

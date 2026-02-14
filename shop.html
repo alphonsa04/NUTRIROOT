@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Fertilizer Shop | NutriRoot</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/auth.js"></script>
+
+    <style>
+        /* Shop Specific Styles */
+        .shop-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            padding: 2rem 0;
+            max-width: 1200px;
+            margin: 90px auto 0;
+            /* Adjusted for fixed navbar */
+        }
+
+        .filters-sidebar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+            /* Adjusted to sit below navbar */
+        }
+
+        .filter-group {
+            margin-bottom: 2rem;
+        }
+
+        .filter-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            color: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        .filter-option input {
+            margin-right: 0.75rem;
+            accent-color: var(--accent-green);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            /* Soft shadow */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            /* Identify for badge positioning */
+            border: 1px solid transparent;
+            /* Prevent jump on border add */
+            overflow: hidden;
+            /* clean edges */
+        }
+
+        .recommendation-badge {
+            background-color: #05CD99;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.4rem 0.8rem;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            border-color: var(--accent-green);
+        }
+
+        .product-image-container {
+            height: 200px;
+            background: #F9FAFC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .product-image {
+            max-height: 80%;
+            max-width: 80%;
+            object-fit: contain;
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(5, 205, 153, 0.1);
+            color: var(--accent-green);
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .product-details {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-name {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        .product-actions {
+            margin-top: auto;
+        }
+
+        .btn-cart {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        /* Cart Floating Button */
+        /* Cart Button in Navbar */
+        .cart-toggle {
+            position: relative;
+            background: #F4F7FE;
+            color: var(--primary-color);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            margin-right: 1rem;
+        }
+
+        .cart-toggle:hover {
+            background: #E0E5F2;
+            transform: translateY(-2px);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #FF5630;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border: 2px solid white;
+        }
+
+        /* Modal Styles override/addition */
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 400px;
+            background: white;
+            z-index: 1000;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            flex-direction: column;
+            animation: slideInRight 0.3s ease;
+        }
+
+        .cart-modal.active {
+            display: flex;
+        }
+
+        .cart-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            backdrop-filter: blur(2px);
+        }
+
+        .cart-overlay.active {
+            display: block;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #F4F7FE;
+        }
+
+        .cart-item-img {
+            width: 60px;
+            height: 60px;
+            background: #F9FAFC;
+            border-radius: 8px;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .cart-item-details {
+            flex: 1;
+        }
+
+        .cart-item-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.95rem;
+        }
+
+        .cart-item-price {
+            color: var(--accent-green);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .cart-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .qty-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 1px solid #E0E5F2;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--secondary-color);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .shop-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .cart-modal {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="shop.html" class="navbar-brand" style="text-decoration: none;">
+            <div class="nutriroot-logo-text">
+                <span class="logo-part">NUTR</span>
+                <span class="logo-plant-container">
+                    <img src="assets/images/tree-logo.png" alt="Tree" class="logo-plant-img">
+                </span>
+                <span class="logo-part">ROOT</span>
+            </div>
+        </a>
+
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Dashboard
+            </a>
+            <a href="recommendation.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2.69l5.74 5.88-5.74 5.88-5.74-5.88z"></path>
+                    <path d="M2 22h20"></path>
+                </svg>
+                Fertilizer
+            </a>
+            <a href="shop.html" class="nav-link active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                Shop
+            </a>
+            <a href="crops.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Crops
+            </a>
+            <a href="history.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                    <polyline points="17 18 23 18 23 12"></polyline>
+                </svg>
+                History
+            </a>
+            <a href="alerts.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                Alerts
+            </a>
+        </div>
+
+        <div class="user-profile" style="display: flex; align-items: center;">
+            <div class="cart-toggle" onclick="ShopUI.toggleCart()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <div id="cartBadge" class="cart-badge" style="display: none;">0</div>
+            </div>
+            <button class="btn-icon" onclick="toggleProfileMenu()" id="profileBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            <div id="profileMenu" class="dropdown-menu">
+                <div class="dropdown-header">
+                    <div class="user-name">
+                        <span id="dropdownUserName">User</span>
+                    </div>
+                    <span class="user-email" id="dropdownUserEmail">email@example.com</span>
+                </div>
+                <a href="#" onclick="signOut()" class="dropdown-item danger">Sign Out</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Shop Area -->
+    <div class="shop-container">
+        <!-- Sidebar Filters -->
+        <aside class="filters-sidebar">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; font-size: 1.25rem;">Filters</h3>
+                <button class="btn-icon" onclick="ShopUI.clearFilters()"
+                    style="font-size: 0.85rem; color: var(--accent-red);">Clear</button>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">Category</div>
+                <label class="filter-option"><input type="checkbox" onchange="ShopUI.filterProducts()"
+                        value="Nitrogen Fertilizers">
+                    Nitrogen Fertilizers</label>
+                <label class="filter-option"><input type="checkbox" onchange="ShopUI.filterProducts()"
+                        value="Phosphatic Fertilizers"> Phosphatic Fertilizers</label>
+                <label class="filter-option"><input type="checkbox" onchange="ShopUI.filterProducts()"
+                        value="Potassic Fertilizers"> Potassic Fertilizers</label>
+                <label class="filter-option"><input type="checkbox" onchange="ShopUI.filterProducts()"
+                        value="Complex NPK Fertilizers">
+                    Complex NPK Fertilizers</label>
+                <label class="filter-option"><input type="checkbox" onchange="ShopUI.filterProducts()"
+                        value="Organic Fertilizers">
+                    Organic Fertilizers</label>
+                <label class="filter-option"><input type="checkbox" onchange="ShopUI.filterProducts()"
+                        value="Soil Conditioners"> Soil Conditioners</label>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-title">Price Range</div>
+                <input type="range" min="0" max="2000" value="2000" id="priceRange" oninput="ShopUI.filterProducts()"
+                    style="width: 100%; accent-color: var(--accent-green);">
+                <div
+                    style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-top: 0.5rem; color: var(--secondary-color);">
+                    <span>₹0</span>
+                    <span id="priceValue">₹2000</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Product Grid -->
+        <main>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h1 class="page-title" style="margin-bottom: 0.25rem;">Fertilizer Shop</h1>
+                    <p class="page-subtitle">Quality inputs for better yields</p>
+                </div>
+                <!-- Search -->
+                <div style="position: relative;">
+                    <input type="text" id="shopSearch" placeholder="Search products..."
+                        oninput="ShopUI.filterProducts()"
+                        style="padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 12px; border: 1px solid #E0E5F2; width: 250px;">
+                    <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #A3AED0;"
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </div>
+
+            <div id="productsGrid" class="products-grid">
+                <!-- Products loaded via JS -->
+                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                    <div class="loader"></div>
+                    <p>Loading products...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+
+    <!-- Cart Modal -->
+    <div class="cart-overlay" id="cartOverlay" onclick="ShopUI.toggleCart()"></div>
+    <div class="cart-modal" id="cartModal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0; font-size: 1.5rem; color: var(--primary-color);">Your Cart</h2>
+            <button class="btn-icon" onclick="ShopUI.toggleCart()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div id="cartItems" style="flex: 1; overflow-y: auto;">
+            <!-- Cart items loaded here -->
+            <div style="text-align: center; margin-top: 3rem; color: var(--secondary-color);">
+                <p>Your cart is empty</p>
+                <button class="btn btn-outline" style="margin-top: 1rem;" onclick="ShopUI.toggleCart()">Start
+                    Shopping</button>
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid #F4F7FE; padding-top: 1.5rem; margin-top: 1rem;">
+            <div
+                style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-weight: 700; font-size: 1.25rem;">
+                <span>Total</span>
+                <span id="cartTotal">₹0.00</span>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="ShopUI.checkout()">
+                Proceed to Checkout
+            </button>
+        </div>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="js/payment_gateway.js"></script>
+    <script src="js/init_products.js"></script>
+    <script src="js/product_engine.js"></script>
+    <script src="js/shop_ui.js"></script>
+    <script src="js/ai-chatbot.js"></script>
+</body>
+
+</html>

@@ -811,219 +811,74 @@ async function updateRecommendationPageUI() {
                 </div>
             </div>
         </div>
-
-        <h2 class="section-title">Personalized Fertilizer Plan</h2>
-        
-        <!-- Professional Summary View at Top -->
-        <div class="simple-summary-card" style="background: linear-gradient(135deg, #1A3C25 0%, #2D5A3D 100%); padding: 2.5rem; border-radius: 24px; box-shadow: 0 20px 60px rgba(26, 60, 37, 0.15); margin-bottom: 3rem; color: white; position: relative; overflow: hidden;">
-            <!-- Decorative background elements -->
-            <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(5, 205, 153, 0.15) 0%, transparent 70%); border-radius: 50%;"></div>
-            <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(5, 205, 153, 0.1) 0%, transparent 70%); border-radius: 50%;"></div>
-            
-            <div style="position: relative; z-index: 1;">
-                <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 2rem;">
-                    <div style="width: 56px; height: 56px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 11l3 3L22 4"></path>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem 0; color: white; letter-spacing: -0.02em;">Required Fertilizers</h3>
-                        <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.85); margin: 0; font-weight: 400;">Quick reference guide for your soil treatment plan</p>
-                    </div>
-                </div>
     `;
 
-    if (result.recommendations.length === 0) {
-        html += `
-            <div style="background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(10px); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2); text-align: center;">
-                <div style="width: 64px; height: 64px; background: rgba(5, 205, 153, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 2rem;">
-                    ✓
-                </div>
-                <p style="color: white; font-size: 1.15rem; font-weight: 600; margin: 0; line-height: 1.5;">
-                    Optimal Soil Condition<br>
-                    <span style="font-size: 0.9rem; font-weight: 400; opacity: 0.9;">No additional fertilizers required at this time</span>
-                </p>
-            </div>
-        `;
-    } else {
-        // Professional fertilizer chips
-        html += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">`;
-        result.recommendations.forEach((rec, index) => {
-            const color = rec.nutrient === 'Nitrogen' ? '#4318FF' :
-                rec.nutrient === 'Phosphorus' ? '#9747FF' :
-                    rec.nutrient === 'Potassium' ? '#FF5630' :
-                        rec.nutrient === 'pH Balancer' ? '#F6AD55' : '#05CD99';
-
-            // Nutrient icons
-            const icon = rec.nutrient === 'Nitrogen' ?
-                '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>' :
-                rec.nutrient === 'Phosphorus' ?
-                    '<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path>' :
-                    rec.nutrient === 'Potassium' ?
-                        '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>' :
-                        '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>';
-
+    // Add specific recommendations
+    if (analysis.recommendations.length > 0) {
+        html += `<h3 class="section-title">Fertilizer Recommendations</h3>`;
+        analysis.recommendations.forEach(rec => {
             html += `
-                <div class="fertilizer-chip" style="background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(10px); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: ${color};"></div>
-                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
-                        <div style="width: 40px; height: 40px; background: rgba(255, 255, 255, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                ${icon}
-                            </svg>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <h4 style="font-size: 1.05rem; font-weight: 700; color: white; margin: 0 0 0.5rem 0; line-height: 1.3;">${rec.fertilizer}</h4>
-                            <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.75rem; background: rgba(255, 255, 255, 0.1); border-radius: 6px; margin-top: 0.5rem;">
-                                <div style="width: 6px; height: 6px; background: ${color}; border-radius: 50%;"></div>
-                                <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.85); font-weight: 500;">${rec.nutrient}</span>
-                            </div>
-                        </div>
+                <div class="recommendation-card" style="border-left-color: var(--accent-green);">
+                    <div class="rec-header">
+                        <span class="rec-title">${rec.fertilizer}</span>
+                        <span class="rec-badge">${rec.nutrient}</span>
                     </div>
+                    <div class="rec-dosage">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        </svg>
+                        Dosage: ${rec.dosage}
+                    </div>
+                    <p class="rec-reason">${rec.reason}</p>
                 </div>
             `;
         });
-        html += `</div>`;
-    }
-
-    html += `</div></div>`;
-
-    // Professional Detailed Description Section
-    html += `
-        <div style="margin-top: 4rem;">
-            <h2 class="section-title">Detailed Application Guide</h2>
-            <p style="color: var(--secondary-color); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6;">Comprehensive instructions for optimal fertilizer application and soil improvement.</p>
-        </div>
-    `;
-
-    if (result.recommendations.length === 0) {
+    } else {
         html += `
-            <div class="recommendation-card" style="border-left: 5px solid var(--accent-green); background: linear-gradient(135deg, #ffffff 0%, #F0FFF4 100%); padding: 2.5rem; border-radius: 24px; box-shadow: 0 8px 30px rgba(5, 205, 153, 0.1); margin-bottom: 1.5rem; position: relative; overflow: hidden;">
-                <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(5, 205, 153, 0.1) 0%, transparent 70%); border-radius: 50%;"></div>
-                <div style="position: relative; z-index: 1;">
-                    <div class="rec-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 48px; height: 48px; background: rgba(5, 205, 153, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                </svg>
-                            </div>
-                            <h3 class="rec-title" style="font-weight: 700; color: var(--primary-color); font-size: 1.3rem;">Balanced Soil Health</h3>
-                        </div>
-                        <span class="rec-badge" style="background: rgba(5, 205, 153, 0.1); color: var(--accent-green); padding: 6px 16px; border-radius: 99px; font-weight: 700; font-size: 0.85rem;">Optimal</span>
-                    </div>
-                    <div class="rec-dosage" style="font-size: 1.15rem; font-weight: 600; color: var(--primary-color); margin-bottom: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: rgba(5, 205, 153, 0.08); border-radius: 10px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2">
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                        </svg>
-                        Maintenance Only
-                    </div>
-                    <p class="rec-reason" style="color: #52665A; font-size: 1rem; line-height: 1.7; margin: 0;">Your nutrient levels are currently ideal for <strong style="color: var(--primary-color);">${latestData.crop}</strong>. Continue with regular soil monitoring and standard maintenance practices. No additional fertilizers required at this time.</p>
-                </div>
+            <div class="info-section" style="text-align: center; padding: 2rem;">
+                <p>No specific fertilizer recommendations needed at this time.</p>
             </div>
         `;
-    } else {
-        result.recommendations.forEach((rec, index) => {
-            const color = rec.nutrient === 'Nitrogen' ? '#4318FF' :
-                rec.nutrient === 'Phosphorus' ? '#9747FF' :
-                    rec.nutrient === 'Potassium' ? '#FF5630' :
-                        rec.nutrient === 'pH Balancer' ? '#F6AD55' : '#05CD99';
-            const bg = rec.nutrient === 'Nitrogen' ? 'rgba(67, 24, 255, 0.08)' :
-                rec.nutrient === 'Phosphorus' ? 'rgba(151, 71, 255, 0.08)' :
-                    rec.nutrient === 'Potassium' ? 'rgba(255, 86, 48, 0.08)' : 'rgba(246, 173, 85, 0.08)';
-            const lightBg = rec.nutrient === 'Nitrogen' ? 'rgba(67, 24, 255, 0.03)' :
-                rec.nutrient === 'Phosphorus' ? 'rgba(151, 71, 255, 0.03)' :
-                    rec.nutrient === 'Potassium' ? 'rgba(255, 86, 48, 0.03)' : 'rgba(246, 173, 85, 0.03)';
-
-            html += `
-                <div class="recommendation-card" style="border-left: 5px solid ${color}; background: white; padding: 2.5rem; border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); margin-bottom: 2rem; position: relative; overflow: hidden;">
-                    <!-- Decorative corner accent -->
-                    <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: ${lightBg}; border-radius: 0 24px 0 100px;"></div>
-                    
-                    <div style="position: relative; z-index: 1;">
-                        <div class="rec-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                            <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
-                                <div style="width: 48px; height: 48px; background: ${bg}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <span style="font-size: 1.25rem; font-weight: 700; color: ${color};">${index + 1}</span>
-                                </div>
-                                <div>
-                                    <h3 class="rec-title" style="font-weight: 700; color: var(--primary-color); font-size: 1.35rem; margin: 0 0 0.25rem 0; line-height: 1.3;">${rec.fertilizer}</h3>
-                                    <span class="rec-badge" style="background: ${bg}; color: ${color}; padding: 6px 14px; border-radius: 99px; font-weight: 600; font-size: 0.8rem; display: inline-block; margin-top: 0.25rem;">${rec.nutrient}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="rec-dosage" style="font-size: 1.05rem; font-weight: 600; color: var(--primary-color); margin: 1.25rem 0; display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1.5rem; background: ${lightBg}; border-radius: 12px; border: 1px solid ${bg};">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                            <span>Recommended Dosage: <strong style="color: ${color};">${rec.dosage}</strong></span>
-                        </div>
-                        
-                        <div style="padding: 1.25rem; background: #F9FAFC; border-radius: 12px; border-left: 3px solid ${color}; margin-top: 1rem;">
-                            <p class="rec-reason" style="color: #52665A; font-size: 0.95rem; line-height: 1.7; margin: 0;">${rec.reason}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
     }
-
-    // Farmer's Educational Guide Section
-    html += `
-        <div class="info-section" style="margin-top: 3.5rem; background: #F9FAFC; border-radius: 24px; padding: 2.5rem; border: 1px solid #E0E5F2;">
-            <h3 class="info-title" style="margin-bottom: 2rem; color: var(--primary-color); font-weight: 700; display: flex; align-items: center; gap: 0.75rem;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-                Farmer's Guide: What do these numbers mean?
-            </h3>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-                <div>
-                    <h5 style="color: var(--accent-blue); font-weight: 700; margin-bottom: 0.75rem;">Nitrogen (Growth)</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Nitrogen is essential for vegetative development. It promotes lush green foliage and vigorous stem growth.
-                    </p>
-                </div>
-                <div>
-                    <h5 style="color: var(--accent-purple); font-weight: 700; margin-bottom: 0.75rem;">Phosphorus (Roots)</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Phosphorus supports root establishment and reproductive development, facilitating healthy flowering and fruiting.
-                    </p>
-                </div>
-                <div>
-                    <h5 style="color: var(--accent-orange); font-weight: 700; margin-bottom: 0.75rem;">Potassium (Health)</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Potassium enhances systemic resilience, improving disease resistance and metabolic efficiency under environmental stress.
-                    </p>
-                </div>
-                <div>
-                    <h5 style="color: var(--accent-green); font-weight: 700; margin-bottom: 0.75rem;">Soil pH (Balance)</h5>
-                    <p style="font-size: 0.85rem; color: var(--secondary-color); line-height: 1.6;">
-                        Soil pH regulates nutrient availability. Optimal balance is critical for the efficient uptake of all mineral inputs.
-                    </p>
-                </div>
-            </div>
-
-            <div style="margin-top: 2.5rem; padding: 1.5rem; background: rgba(5, 205, 153, 0.05); border-radius: 16px; border: 1px dashed var(--accent-green);">
-                <p style="color: var(--primary-color); font-weight: 600; font-size: 0.95rem;">
-                    💡 Smart Tip for ${latestData.crop}: ${result.cropRecommendation.notes}
-                </p>
-            </div>
-        </div>
-
-    `;
 
     container.innerHTML = html;
+
+    // Load Product Recommendations
+    const productContainer = document.getElementById('recommendedProducts');
+    if (productContainer && window.ProductEngine) {
+        const products = await ProductEngine.getRecommendations(result.analysis);
+
+        if (products.length > 0) {
+            let productHtml = `
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Recommended Products for You</span>
+                    <a href="shop.html" style="font-size: 0.9rem; color: var(--accent-green); text-decoration: none;">View Shop &rarr;</a>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+            `;
+
+            products.slice(0, 3).forEach(product => {
+                productHtml += `
+                    <div class="product-card" style="background: white; border-radius: 16px; border: 1px solid #E0E5F2; overflow: hidden; transition: transform 0.3s ease;">
+                        <div style="height: 180px; background: #F9FAFC; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <img src="${product.image}" alt="${product.name}" style="max-height: 80%; max-width: 80%; object-fit: contain;" onerror="this.src='assets/images/tree-logo.png'">
+                            ${product.matchReason ? `<span style="position: absolute; top: 10px; left: 10px; background: #E6F7F2; color: #05CD99; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${product.matchReason}</span>` : ''}
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--primary-color);">${product.name}</h4>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                                <span style="font-weight: 700; color: var(--accent-green); font-size: 1.1rem;">₹${product.price}</span>
+                                <button class="btn btn-sm btn-outline" onclick="ProductEngine.addToCart('${product.id}')">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            productHtml += `</div>`;
+            productContainer.innerHTML = productHtml;
+        }
+    }
 }
 
 /**
@@ -1052,7 +907,7 @@ async function updateHistoryUI() {
 
     let html = `
         <div class="history-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <!-- Header for the list -->
+            <!--Header for the list-->
             <div style="display: flex; padding: 0 1.25rem 0.5rem; color: #A3AED0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
                 <div style="min-width: 180px;">Date & Status</div>
                 <div style="flex: 1;">Target Crop</div>
@@ -1090,7 +945,7 @@ async function updateHistoryUI() {
 
         html += `
             <div class="history-item-row" style="display: flex; align-items: center; background: white; border-radius: 16px; padding: 0.875rem 1.25rem; border: 1px solid #E0E5F2; transition: transform 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                <!-- Status & Date -->
+                <!--Status & Date-->
                 <div style="display: flex; align-items: center; gap: 12px; min-width: 180px;">
                     <div title="${result.overallStatus.status}" style="width: 10px; height: 10px; border-radius: 50%; background: ${statusColor}; flex-shrink: 0; box-shadow: 0 0 8px ${statusColor}44;"></div>
                     <div style="display: flex; flex-direction: column;">
@@ -1099,24 +954,24 @@ async function updateHistoryUI() {
                     </div>
                 </div>
 
-                <!-- Crop -->
+                <!--Crop -->
                 <div style="flex: 1; min-width: 0; padding-right: 1rem;">
                     <span style="font-weight: 700; color: var(--primary-color); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${record.crop}</span>
                 </div>
 
-                <!-- Fertilizers -->
+                <!--Fertilizers -->
                 <div style="flex: 1.5; min-width: 0; display: flex; flex-wrap: nowrap; overflow: hidden; align-items: center; margin-right: 1rem;">
                     ${fertilizerBadges}
                 </div>
 
-                <!-- NPK Values -->
+                <!--NPK Values-->
                 <div style="display: flex; gap: 0.75rem; min-width: 200px; background: #F8FAFC; padding: 6px 12px; border-radius: 10px; margin-right: 1.5rem;">
                     <div style="flex: 1; text-align: center;"><small style="color: #A3AED0; font-weight: 700; font-size: 0.65rem; display: block;">N</small><span style="font-weight: 800; font-size: 0.85rem; color: #4318FF;">${record.nitrogen}</span></div>
                     <div style="flex: 1; text-align: center; border-left: 1px solid #E0E5F2; border-right: 1px solid #E0E5F2;"><small style="color: #A3AED0; font-weight: 700; font-size: 0.65rem; display: block;">P</small><span style="font-weight: 800; font-size: 0.85rem; color: #9747FF;">${record.phosphorus}</span></div>
                     <div style="flex: 1; text-align: center;"><small style="color: #A3AED0; font-weight: 700; font-size: 0.65rem; display: block;">K</small><span style="font-weight: 800; font-size: 0.85rem; color: #FF5630;">${record.potassium}</span></div>
                 </div>
 
-                <!-- Other Values -->
+                <!--Other Values-->
                 <div style="display: flex; gap: 0.75rem; min-width: 220px; align-items: center;">
                     <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.ph}</strong> <small>pH</small></div>
                     <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.moisture}%</strong> <small>M</small></div>
@@ -1124,7 +979,7 @@ async function updateHistoryUI() {
                     <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.ec || '0.00'}</strong> <small>EC</small></div>
                 </div>
 
-                <!-- Delete Action -->
+                <!--Delete Action-->
                 <div style="width: 36px; text-align: right;">
                     <button class="btn-icon danger" onclick="deleteHistoryItem('${record.id}')" title="Delete Record" style="background: rgba(238, 93, 114, 0.08); color: var(--accent-red); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -1238,10 +1093,10 @@ document.addEventListener('DOMContentLoaded', () => {
  * @returns {string} SVG path 'd' string
  */
 function generateSparklinePath(data, width = 100, height = 40) {
-    if (!data || data.length === 0) return `M 0 ${height / 2} L ${width} ${height / 2}`;
+    if (!data || data.length === 0) return `M 0 ${height / 2} L ${width} ${height / 2} `;
 
     // If only one point, draw a flat line
-    if (data.length === 1) return `M 0 ${height / 2} L ${width} ${height / 2}`;
+    if (data.length === 1) return `M 0 ${height / 2} L ${width} ${height / 2} `;
 
     const min = Math.min(...data);
     const max = Math.max(...data);
@@ -1254,11 +1109,11 @@ function generateSparklinePath(data, width = 100, height = 40) {
         // Invert Y (SVG 0 is top), add padding (5px)
         const normalizedY = 1 - ((val - min) / range);
         const y = (normalizedY * (height - 10)) + 5;
-        return `${x} ${y}`;
+        return `${x} ${y} `;
     });
 
     // Create path command
-    return `M ${points.join(' L ')}`;
+    return `M ${points.join(' L ')} `;
 }
 
 /**
@@ -1305,42 +1160,7 @@ async function updateDashboardGraphs() {
 
 // End of script
 
-/* ========================================
-   NOTIFICATION BADGE LOGIC
-   ======================================== */
 
-/**
- * Check for soil deficiencies and update the nav badge
- */
-async function updateAlertBadge() {
-    // We target elements with ID 'alertBadge'
-    const badge = document.getElementById('alertBadge');
-    if (!badge) return;
-
-    try {
-        const soilData = await getLatestSoilData();
-        if (!soilData) {
-            badge.style.display = 'none';
-            return;
-        }
-
-        const analysis = analyzeSoilData(soilData);
-        const warnings = analysis.warnings || [];
-
-        // Count critical and medium severity issues
-        const issues = warnings.filter(w => w.severity === 'high' || w.severity === 'medium').length;
-
-        if (issues > 0) {
-            badge.textContent = issues > 9 ? '9+' : issues;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
-    } catch (e) {
-        console.warn('Failed to update alert badge:', e);
-        badge.style.display = 'none';
-    }
-}
 
 
 /* ========================================
