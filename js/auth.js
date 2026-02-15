@@ -45,11 +45,11 @@ function switchModal(type) {
         if (forgotCard) forgotCard.style.display = 'none';
 
         if (type === 'login') {
-            loginCard.style.display = 'block';
+            loginCard.style.display = 'flex';
         } else if (type === 'register') {
-            registerCard.style.display = 'block';
+            registerCard.style.display = 'flex';
         } else if (type === 'forgot' && forgotCard) {
-            forgotCard.style.display = 'block';
+            forgotCard.style.display = 'flex';
         }
     }
 }
@@ -178,18 +178,10 @@ function signInWithGoogle() {
 
 // 2. Email/Password Registration
 function registerWithEmail(fullName, email, password) {
-    // Client-side Validation
-    if (!validateName(fullName)) {
-        showModal('Invalid Name', 'Please enter a valid name (letters and spaces only, 2-50 characters).', 'error');
-        return;
-    }
-    if (!validateEmail(email)) {
-        showModal('Invalid Email', 'Please enter a valid email address.', 'error');
-        return;
-    }
-    if (!validatePassword(password)) {
-        showModal('Weak Password', 'Password must be at least 6 characters long.', 'error');
-        return;
+    // Rely on native HTML5 validation attributes in index.html
+    const form = document.getElementById('registerForm');
+    if (form && !form.reportValidity()) {
+        return; // Browser will show validation bubbles
     }
 
     auth.createUserWithEmailAndPassword(email, password)
@@ -233,14 +225,10 @@ function registerWithEmail(fullName, email, password) {
 
 // 3. Email/Password Login
 function signInWithEmail(email, password) {
-    // Client-side Validation
-    if (!validateEmail(email)) {
-        showModal('Invalid Email', 'Please enter a valid email address.', 'error');
-        return;
-    }
-    if (!password) {
-        showModal('Missing Password', 'Please enter your password.', 'error');
-        return;
+    // Rely on native HTML5 validation attributes in index.html
+    const form = document.getElementById('loginForm');
+    if (form && !form.reportValidity()) {
+        return; // Browser will show validation bubbles
     }
 
     auth.signInWithEmailAndPassword(email, password)
@@ -272,10 +260,10 @@ function signInWithEmail(email, password) {
 
 // 4. Password Reset
 function resetPassword(email) {
-    // Client-side Validation
-    if (!validateEmail(email)) {
-        showModal('Invalid Email', 'Please enter a valid email address.', 'error');
-        return;
+    // Rely on native HTML5 validation attributes in index.html
+    const form = document.getElementById('forgotForm');
+    if (form && !form.reportValidity()) {
+        return; // Browser will show validation bubbles
     }
 
     auth.sendPasswordResetEmail(email)

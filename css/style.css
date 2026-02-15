@@ -1201,23 +1201,29 @@ body {
     font-weight: 500;
 }
 
-/* Modal Styles */
+/* ========================================
+   AUTHENTICATION MODALS (EXACT REFERENCE MATCH)
+   ======================================== */
+
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    /* Darker overlay */
-    backdrop-filter: blur(5px);
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.65);
+    /* Dark transparent background */
+    backdrop-filter: blur(10px);
+    /* Glassmorphism background effect */
     display: flex;
-    align-items: center;
     justify-content: center;
-    z-index: 3000;
+    /* Center horizontally */
+    align-items: center;
+    /* Center vertically */
+    z-index: 5000;
     opacity: 0;
     pointer-events: none;
-    transition: none;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .modal-overlay.active {
@@ -1226,24 +1232,290 @@ body {
 }
 
 .auth-card {
-    background: white;
-    padding: 3rem 2.5rem;
-    border-radius: 16px;
-    /* Slightly tighter radius */
-    width: 100%;
-    max-width: 450px;
-    /* Slightly wider */
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    position: relative;
-    transform: translateY(0);
-    transition: none;
+    display: none;
+    /* Hidden by default, JS will set display: flex */
+    width: 95%;
+    max-width: 950px;
+    height: 600px;
+    /* Fixed height for modal look */
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+    transform: scale(0.9);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
+.modal-overlay.active .auth-card {
+    transform: scale(1);
+}
+
+.auth-card-split {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* LEFT SIDE: IMMERSIVE IMAGE */
+.auth-image-side {
+    flex: 1;
+    background-image: url('../assets/images/hero-field.png');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    color: white;
+}
+
+.auth-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+}
+
+.auth-promo-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    width: 100%;
+    padding: 0 2rem;
+}
+
+.promo-header {
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+    /* Stronger shadow */
+}
+
+.promo-subheader {
+    font-size: 0.95rem;
+    font-weight: 600;
+    /* Bolder weight */
+    line-height: 1.8;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    opacity: 1;
+    /* Full opacity */
+    margin-bottom: 0;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+    /* Added shadow for visibility */
+}
+
+.promo-code-box {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    border: 1px dashed white;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+}
+
+.promo-code-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* RIGHT SIDE: CLEAN FORM */
+.auth-form-side {
+    flex: 1.1;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    position: relative;
+    background: #fff;
+}
+
+/* Circular Close Button at top right of the Modal overlay or card */
+.close-btn {
+    position: fixed;
+    /* Relative to viewport/overlay to be clearly visible */
+    top: 2rem;
+    right: 3rem;
+    width: 44px;
+    height: 44px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 6000;
+    font-size: 1.5rem;
+    color: #333;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.close-btn:hover {
+    transform: rotate(90deg);
+    background: #f8f8f8;
+}
+
+.auth-logo-container {
+    margin-bottom: 3rem;
+}
+
+.auth-center-logo {
+    height: 65px;
+    width: auto;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    /* Reduced for more professional look */
+    color: #333;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.auth-subtitle {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    color: #888;
+}
+
+.login-form-container {
+    width: 100%;
+    max-width: 360px;
+}
+
+/* Minimalist Inputs - EXACT Match */
+.form-input {
+    display: block;
+    width: 100%;
+    border: none !important;
+    border-bottom: 1px solid #ddd !important;
+    background: transparent !important;
+    padding: 1.2rem 0 !important;
+    font-size: 1rem !important;
+    color: #333 !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transition: border-color 0.3s;
+}
+
+.form-input:focus {
+    outline: none !important;
+    border-bottom: 1px solid #A63131 !important;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-options {
+    margin: 1.5rem 0;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.95rem;
+    color: #666;
+    cursor: pointer;
+}
+
+.btn-auth-primary {
+    width: 100%;
+    padding: 1.2rem;
+    background: #A63131 !important;
+    /* Specific Reference Red */
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    /* Slight rounding for a premium modern feel */
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin-top: 1rem;
+    text-transform: uppercase;
+    transition: background 0.3s;
+}
+
+.btn-auth-primary:hover {
+    background: #8e2929 !important;
+}
+
+.btn-google-auth {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #555;
+    cursor: pointer;
+}
+
+.form-notice {
+    font-size: 0.8rem;
+    color: #999;
+    margin: 1rem 0 1.5rem;
+    text-align: left;
+}
+
+.auth-footer {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #999;
+    text-align: center;
+}
+
+.auth-footer a {
+    color: #333;
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 0.6rem;
+}
+
+@media (max-width: 900px) {
+    .auth-image-side {
+        display: none;
+    }
+
+    .auth-form-side {
+        width: 100%;
+        padding: 3rem 2rem;
+    }
+}
+
+/* Generic Modal Box (Alerts/Info) */
 .modal-overlay.active .auth-card {
     transform: translateY(0);
 }
 
-/* Generic Modal Box (Alerts/Info) */
 .modal-box {
     background: white;
     padding: 2rem;
@@ -1295,7 +1567,6 @@ body {
     justify-content: center;
     margin-left: auto;
     margin-right: auto;
-    font-weight: bold;
 }
 
 .modal-icon.error {
@@ -1314,127 +1585,6 @@ body {
     background: #BEE3F8;
     color: #2C5282;
     border: 4px solid #EBF8FF;
-}
-
-.auth-header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.auth-title {
-    font-size: 2rem;
-    /* Larger branding */
-    font-family: 'DM Sans', serif;
-    /* Use serif/display feel if possible, or stick to sans */
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 0.75rem;
-}
-
-.auth-subtitle {
-    color: var(--secondary-color);
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-.form-group {
-    margin-bottom: 1.25rem;
-}
-
-.form-input {
-    width: 100%;
-    padding: 1rem 1.25rem;
-    border: 1px solid #E0E5F2;
-    border-radius: 12px;
-    font-size: 1rem;
-    color: var(--primary-color);
-    transition: all 0.2s;
-    background: #F9FAFC;
-    /* Slight bg for inputs */
-}
-
-.form-input:focus {
-    border-color: var(--primary-color);
-    background: white;
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(26, 60, 37, 0.1);
-}
-
-.forgot-password-link {
-    display: block;
-    text-align: right;
-    color: #E31A1A;
-    /* Or a distinct color, user image had reddish/brown text? "Forgot password?" */
-    /* Actually image had "Forgot password?" in reddish color. I'll use a muted red or secondary styling. */
-    color: #A16262;
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-    text-decoration: none;
-}
-
-.btn-auth-primary {
-    width: 100%;
-    padding: 1rem;
-    background: #F4F4F4;
-    /* Disabled-ish look in image, but I should make it functional. */
-    /* User said "make it like professional... not color". I will use my Green theme. */
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    margin-bottom: 1rem;
-    transition: background 0.2s;
-}
-
-.btn-auth-primary:hover {
-    background: #142E1C;
-}
-
-.btn-google-auth {
-    width: 100%;
-    padding: 0.8rem;
-    background: #FFFFFF;
-    color: #3C4043;
-    /* Standard Google Text Gray */
-    border: 1px solid #DADCE0;
-    border-radius: 12px;
-    /* Matching theme radius */
-    font-weight: 500;
-    font-family: 'Roboto', sans-serif;
-    /* Google uses Roboto, but system font is fine */
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    transition: background 0.2s, box-shadow 0.2s;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    /* Subtle lift */
-}
-
-.btn-google-auth:hover {
-    background: #F8F9FA;
-    border-color: #D2E3FC;
-    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.1);
-    /* Standard hover shadow */
-}
-
-.auth-footer {
-    text-align: center;
-    margin-top: 1.5rem;
-    font-size: 0.95rem;
-    color: var(--secondary-color);
-}
-
-.auth-footer a {
-    color: var(--primary-color);
-    font-weight: 700;
-    text-decoration: none;
 }
 
 /* ========================================
@@ -1759,7 +1909,9 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
-}/* Contact Toast Notification */
+}
+
+/* Contact Toast Notification */
 .contact-toast {
     display: none;
     position: fixed;
@@ -1821,7 +1973,7 @@ body {
 
 .filter-btn:hover {
     background: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .filter-btn.active {
@@ -1846,7 +1998,7 @@ body {
 
 .alert-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
 .alert-icon-box {
@@ -1932,10 +2084,12 @@ body {
 .alert-card.alert-high {
     border-left: 5px solid #e31a1a;
 }
+
 .alert-card.alert-medium {
     border-left: 5px solid #ff9800;
 }
-.alert-card.alert-low, 
+
+.alert-card.alert-low,
 .alert-card.alert-soil {
     border-left: 5px solid #05cd99;
 }
@@ -1943,7 +2097,7 @@ body {
 /* Empty States */
 .all-good {
     text-align: center;
-    background: linear-gradient(135deg, rgba(5, 205, 153, 0.05) 0%, rgba(255,255,255,0.8) 100%);
+    background: linear-gradient(135deg, rgba(5, 205, 153, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);
     border: 1px solid rgba(5, 205, 153, 0.2);
     border-radius: 24px;
     padding: 3rem 2rem;
@@ -1958,18 +2112,18 @@ body {
     align-items: center;
     justify-content: center;
     margin: 0 auto 1.5rem;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 /* NOTIFICATION BADGE */
 .nav-link {
-    position: relative; 
+    position: relative;
 }
 
 .nav-notification-badge {
     position: absolute;
     top: 5px;
-    right: 15px; 
+    right: 15px;
     min-width: 18px;
     height: 18px;
     background-color: #e31a1a;
@@ -1988,8 +2142,13 @@ body {
 }
 
 @keyframes popIn {
-    from { transform: translate(50%, -50%) scale(0); }
-    to { transform: translate(50%, -50%) scale(1); }
+    from {
+        transform: translate(50%, -50%) scale(0);
+    }
+
+    to {
+        transform: translate(50%, -50%) scale(1);
+    }
 }
 
 @media (max-width: 768px) {

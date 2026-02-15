@@ -532,116 +532,142 @@
     <!-- Auth Modal -->
     <div id="authModalOverlay" class="modal-overlay">
         <!-- Login Card -->
-        <div id="loginCard" class="auth-card" style="display: none;">
-            <button onclick="closeAuthModal()"
-                style="position: absolute; right: 1.5rem; top: 1.5rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--secondary-color);">&times;</button>
-            <div class="auth-header">
-                <h2 class="auth-title">Welcome Back!</h2>
-                <p class="auth-subtitle">Sign in to access your dashboard.</p>
+        <div id="loginCard" class="auth-card auth-card-split" style="display: none;">
+            <div class="auth-image-side">
+                <div class="auth-image-overlay"></div>
+                <div class="auth-promo-content">
+                    <h3 class="promo-header">SMART SOIL MONITORING SOLUTIONS</h3>
+                    <p class="promo-subheader">OPTIMIZE YOUR HARVEST WITH REAL-TIME DATA</p>
+                </div>
             </div>
-            <form id="loginForm">
-                <div class="form-group">
-                    <input type="email" class="form-input" id="loginEmail" placeholder="Email address" required>
+            <div class="auth-form-side">
+                <button onclick="closeAuthModal()" class="close-btn">&times;</button>
+                <div class="auth-logo-container">
+                    <img src="assets/images/tree-logo.png" alt="NutriRoot Logo" class="auth-center-logo">
                 </div>
-                <div class="form-group">
-                    <input type="password" class="form-input" id="loginPass" placeholder="Type password" required>
+                <div class="auth-header">
+                    <h2 class="auth-title">SIGN IN/ SIGN UP
+                    </h2>
+                    <p class="auth-subtitle">via NutriRoot</p>
                 </div>
+                <div class="login-form-container">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <input type="email" id="loginEmail" class="form-input" placeholder="Email address" required>
+                        </div>
+                        <div class="form-group" style="position: relative; margin-top: 1rem;">
+                            <input type="password" id="loginPassword" class="form-input" placeholder="Password"
+                                required>
+                            <a href="#" onclick="switchModal('forgot')"
+                                style="position: absolute; right: 0; bottom: -20px; font-size: 0.75rem; color: #888; text-decoration: none;">
+                                Forgot Password?
+                            </a>
+                        </div>
+                        <div class="form-options" style="margin-top: 2.5rem;">
+                            <label class="remember-me">
+                                <input type="checkbox" id="loginRemember"> Remember me
+                            </label>
+                        </div>
+                        <button type="submit" class="btn-auth-primary">SIGN IN</button>
+                    </form>
 
-                <a href="#" class="forgot-password-link" onclick="switchModal('forgot')">Forgot password?</a>
+                    <button class="btn-google-auth" onclick="signInWithGoogle()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"
+                            width="20">
+                        Sign in with Google
+                    </button>
 
-                <button type="submit" class="btn-auth-primary">Log In</button>
-            </form>
-
-            <button class="btn-google-auth" id="googleSignInBtn" onclick="signInWithGoogle()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        fill="#4285F4" />
-                    <path
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        fill="#34A853" />
-                    <path
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        fill="#FBBC05" />
-                    <path
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        fill="#EA4335" />
-                </svg>
-                Continue with Google
-            </button>
-
-            <div class="auth-footer">
-                Don't have an account yet? <a href="#" onclick="switchModal('register')">Register</a>
+                    <p class="auth-footer">
+                        Don't have an account? <a href="#" onclick="switchModal('register')">Sign Up</a>
+                    </p>
+                </div>
             </div>
         </div>
 
         <!-- Register Card -->
-        <div id="registerCard" class="auth-card" style="display: none;">
-            <button onclick="closeAuthModal()"
-                style="position: absolute; right: 1.5rem; top: 1.5rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--secondary-color);">&times;</button>
-            <div class="auth-header">
-                <h2 class="auth-title">Create Account</h2>
-                <p class="auth-subtitle">Join NutriRoot for sustainable farming.</p>
+        <div id="registerCard" class="auth-card auth-card-split" style="display: none;">
+            <div class="auth-image-side">
+                <div class="auth-image-overlay"></div>
+                <div class="auth-promo-content">
+                    <h3 class="promo-header">SMART SOIL MONITORING SOLUTIONS</h3>
+                    <p class="promo-subheader">OPTIMIZE YOUR HARVEST WITH REAL-TIME DATA</p>
+                </div>
             </div>
-            <form id="registerForm">
-                <div class="form-group">
-                    <input type="text" class="form-input" id="regName" placeholder="Full Name" required
-                        pattern="[A-Za-z\s]+" title="Name should only contain letters and spaces" minlength="2"
-                        maxlength="50">
+            <div class="auth-form-side">
+                <button onclick="closeAuthModal()" class="close-btn">&times;</button>
+                <div class="auth-logo-container">
+                    <img src="assets/images/tree-logo.png" alt="NutriRoot Logo" class="auth-center-logo">
                 </div>
-                <div class="form-group">
-                    <input type="email" class="form-input" id="regEmail" placeholder="Email address" required>
+                <div class="auth-header">
+                    <h2 class="auth-title">SIGN IN/ SIGN UP</h2>
+                    <p class="auth-subtitle">via NutriRoot</p>
                 </div>
-                <div class="form-group">
-                    <input type="password" class="form-input" id="regPass" placeholder="Create password" required>
-                </div>
-                <button type="submit" class="btn-auth-primary">Sign In</button>
-            </form>
+                <div class="login-form-container">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <input type="text" id="regName" class="form-input" placeholder="Full Name" required
+                                minlength="2" maxlength="50" pattern="^[A-Za-z\s]+$"
+                                title="Please enter letters and spaces only">
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="regEmail" class="form-input" placeholder="Email address" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="regPassword" class="form-input" placeholder="Create password"
+                                required minlength="6">
+                        </div>
+                        <button type="submit" class="btn-auth-primary">SIGN UP</button>
+                    </form>
 
-            <button class="btn-google-auth" onclick="signInWithGoogle()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        fill="#4285F4" />
-                    <path
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        fill="#34A853" />
-                    <path
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        fill="#FBBC05" />
-                    <path
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        fill="#EA4335" />
-                </svg>
-                Sign up with Google
-            </button>
+                    <button class="btn-google-auth" onclick="signInWithGoogle()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"
+                            width="20">
+                        Sign up with Google
+                    </button>
 
-            <div class="auth-footer">
-                Already have an account? <a href="#" onclick="switchModal('login')">Log In</a>
+                    <p class="auth-footer">
+                        Already have an account? <a href="#" onclick="switchModal('login')">Sign In</a>
+                    </p>
+                </div>
             </div>
         </div>
 
         <!-- Forgot Password Card -->
-        <div id="forgotCard" class="auth-card" style="display: none;">
-            <button onclick="closeAuthModal()"
-                style="position: absolute; right: 1.5rem; top: 1.5rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--secondary-color);">&times;</button>
-            <div class="auth-header">
-                <h2 class="auth-title">Reset Password</h2>
-                <p class="auth-subtitle">Enter your email to receive a password reset link.</p>
-            </div>
-            <form id="forgotForm">
-                <div class="form-group">
-                    <input type="email" class="form-input" id="forgotEmail" placeholder="Email address" required>
+        <div id="forgotCard" class="auth-card auth-card-split" style="display: none;">
+            <div class="auth-image-side">
+                <div class="auth-image-overlay"></div>
+                <div class="auth-promo-content">
+                    <h3 class="promo-header">SMART SOIL MONITORING SOLUTIONS</h3>
+                    <p class="promo-subheader">OPTIMIZE YOUR HARVEST WITH REAL-TIME DATA</p>
                 </div>
-                <button type="submit" class="btn-auth-primary">Send Reset Link</button>
-            </form>
-
-            <div id="forgotSuccessMessage" style="display: none; color: #4ade80; margin-top: 1rem; text-align: center;">
-                ✓ Password reset link sent! Check your email.
             </div>
+            <div class="auth-form-side">
+                <button onclick="closeAuthModal()" class="close-btn">&times;</button>
+                <div class="auth-logo-container">
+                    <img src="assets/images/tree-logo.png" alt="NutriRoot Logo" class="auth-center-logo">
+                </div>
+                <div class="auth-header">
+                    <h2 class="auth-title">FORGOT PASSWORD?</h2>
+                    <p class="auth-subtitle"></p>
+                </div>
+                <div class="login-form-container">
+                    <form id="forgotForm">
+                        <div class="form-group">
+                            <input type="email" id="forgotEmail" class="form-input" placeholder="Email address"
+                                required>
+                        </div>
+                        <button type="submit" class="btn-auth-primary">RESET PASSWORD</button>
+                    </form>
 
-            <div class="auth-footer">
-                Remembered your password? <a href="#" onclick="switchModal('login')">Back to Log In</a>
+                    <div id="forgotSuccessMessage"
+                        style="display: none; color: #4ade80; margin-top: 1rem; text-align: center;">
+                        ✓ Password reset link sent! Check your email.
+                    </div>
+
+                    <p class="auth-footer">
+                        Remember password? <a href="#" onclick="switchModal('login')">Back to Sign In</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -867,7 +893,7 @@
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPass').value;
+            const pass = document.getElementById('loginPassword').value;
             signInWithEmail(email, pass);
         });
 
@@ -875,7 +901,7 @@
             e.preventDefault();
             const name = document.getElementById('regName').value;
             const email = document.getElementById('regEmail').value;
-            const pass = document.getElementById('regPass').value;
+            const pass = document.getElementById('regPassword').value;
             registerWithEmail(name, email, pass);
         });
 
