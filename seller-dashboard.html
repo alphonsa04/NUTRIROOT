@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard | NutriRoot Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/validation-utils.js"></script>
+    <style>
+        .seller-container {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+            background: #F4F7FE;
+        }
+
+        .seller-sidebar {
+            background: white;
+            padding: 2rem;
+            border-right: 1px solid #E0E5F2;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            color: #A3AED0;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover,
+        .sidebar-item.active {
+            background: #F4F7FE;
+            color: var(--primary-color);
+        }
+
+        .sidebar-item.active svg {
+            color: var(--accent-green);
+        }
+
+        .main-content {
+            padding: 2rem 3rem;
+            overflow-y: auto;
+        }
+
+        /* Premium Header Styling */
+        .dashboard-header-premium {
+            background: linear-gradient(135deg, #1A3C25 0%, #2D5A3D 100%);
+            border-radius: 24px;
+            padding: 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 30px rgba(26, 60, 37, 0.15);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-header-premium::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header-greeting-badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.4rem 1rem;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-shop-title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .header-user-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            padding: 1.5rem 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: right;
+        }
+
+        .user-role-badge {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-green);
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .user-name-text {
+            font-size: 1.2rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .user-email-text {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card-seller {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #F4F7FE;
+            color: var(--accent-green);
+        }
+
+        .product-list-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .seller-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .seller-table th {
+            text-align: left;
+            padding: 1rem;
+            color: #A3AED0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #F4F7FE;
+        }
+
+        .seller-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #F4F7FE;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .product-img-sm {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        /* Modal for Add Product */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .form-modal {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .span-2 {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="seller-container">
+        <!-- Sidebar -->
+        <aside class="seller-sidebar">
+            <a href="dashboard.html" class="navbar-brand" style="margin-bottom: 2rem;">
+                <div class="nutriroot-logo-text" style="font-size: 1.2rem;">
+                    <span class="logo-part">NUTR</span>
+                    <span class="logo-plant-container" style="width: 25px; height: 40px;">
+                        <img src="assets/images/tree-logo.png" alt="Tree" style="height: 50px; top: -10px;">
+                    </span>
+                    <span class="logo-part">ROOT</span>
+                </div>
+            </a>
+
+            <div class="sidebar-item active" onclick="SellerDashboard.switchTab('overview')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Overview
+            </div>
+            <div class="sidebar-item" onclick="SellerDashboard.switchTab('products')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                My Products
+            </div>
+            <div class="sidebar-item" onclick="SellerDashboard.switchTab('orders')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Orders
+            </div>
+
+            <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid #eee;">
+                <div class="sidebar-item" onclick="signOut()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sign Out
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+            <header class="dashboard-header-premium">
+                <div class="header-main-info">
+                    <div class="header-greeting-badge">Welcome back, Seller</div>
+                    <h1 class="header-shop-title" id="sellerShopName">Shop Name</h1>
+                    <p class="header-subtitle">Manage your products and orders from one place</p>
+                </div>
+                <div class="header-user-card">
+                    <div class="user-details-highlight">
+                        <span class="user-role-badge">Seller Account</span>
+                        <h4 id="sellerName" class="user-name-text">Owner Name</h4>
+                        <p id="sellerEmail" class="user-email-text">email@example.com</p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Overview Content -->
+            <div id="overviewTab">
+                <div class="stats-grid">
+                    <div class="stat-card-seller">
+                        <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            </svg></div>
+                        <div>
+                            <p style="color: #A3AED0; font-size: 0.8rem; margin:0;">Total Products</p>
+                            <h2 id="statProducts" style="margin:0;">0</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card-seller">
+                        <div class="stat-icon" style="color: #4318FF; background: #E9E3FF;"><svg width="24" height="24"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            </svg></div>
+                        <div>
+                            <p style="color: #A3AED0; font-size: 0.8rem; margin:0;">Total Orders</p>
+                            <h2 id="statOrders" style="margin:0;">0</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card-seller">
+                        <div class="stat-icon" style="color: #05CD99; background: #E0F9F1;"><svg width="24" height="24"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg></div>
+                        <div>
+                            <p style="color: #A3AED0; font-size: 0.8rem; margin:0;">Revenue</p>
+                            <h2 id="statRevenue" style="margin:0;">₹0</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-list-card">
+                    <div class="table-header">
+                        <h3 style="margin: 0;">Recent Orders</h3>
+                        <div style="display: flex; gap: 0.8rem;">
+                            <button class="btn btn-primary btn-sm" onclick="SellerDashboard.openAddProductModal()">+ Add
+                                New Product</button>
+                            <button class="btn btn-outline btn-sm" onclick="SellerDashboard.switchTab('orders')">View
+                                All</button>
+                        </div>
+                    </div>
+                    <div id="recentOrdersList">
+                        <p style="color: #A3AED0; text-align: center; padding: 2rem;">No orders yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Content -->
+            <div id="productsTab" style="display: none;">
+                <div class="product-list-card">
+                    <div class="table-header">
+                        <h3 style="margin: 0;">My Listed Fertilizers</h3>
+                        <button class="btn btn-primary" onclick="SellerDashboard.openAddProductModal()">+ Add New
+                            Product</button>
+                    </div>
+
+                    <table class="seller-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>NPK</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myProductsTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Orders Content -->
+            <div id="ordersTab" style="display: none;">
+                <div class="product-list-card">
+                    <h3 style="margin-bottom: 1.5rem;">All Product Orders</h3>
+                    <div id="allOrdersList">
+                        <p style="color: #A3AED0; text-align: center; padding: 2rem;">No orders found.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div id="productModal" class="modal-overlay">
+        <div class="form-modal">
+            <h2 id="modalTitle" style="margin-bottom: 1.5rem;">Add New Fertilizer</h2>
+            <form id="productForm" onsubmit="SellerDashboard.handleProductSubmit(event)">
+                <input type="hidden" id="editProductId">
+                <div class="form-grid">
+                    <div class="form-group span-2">
+                        <label>Product Name</label>
+                        <input type="text" id="pName" class="form-input" required
+                            placeholder="e.g. Organic Nitrogen Booster">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="pCategory" class="form-input" required>
+                            <option value="Nitrogen Fertilizers">Nitrogen Fertilizers</option>
+                            <option value="Phosphatic Fertilizers">Phosphatic Fertilizers</option>
+                            <option value="Potassic Fertilizers">Potassic Fertilizers</option>
+                            <option value="Complex NPK Fertilizers">Complex NPK Fertilizers</option>
+                            <option value="Organic Fertilizers">Organic Fertilizers</option>
+                            <option value="Soil Conditioners">Soil Conditioners</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (₹)</label>
+                        <input type="number" id="pPrice" class="form-input" required min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Quantity</label>
+                        <input type="number" id="pStock" class="form-input" required min="0" placeholder="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Nitrogen (%)</label>
+                        <input type="number" id="pN" class="form-input" step="0.1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Phosphorus (%)</label>
+                        <input type="number" id="pP" class="form-input" step="0.1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Potassium (%)</label>
+                        <input type="number" id="pK" class="form-input" step="0.1" value="0">
+                    </div>
+                    <div class="form-group span-2">
+                        <label>Description</label>
+                        <textarea id="pDesc" class="form-input" style="height: 100px;"
+                            placeholder="Describe your product..."></textarea>
+                    </div>
+                    <div class="form-group span-2">
+                        <label>Product Image</label>
+                        <div class="image-upload-container"
+                            style="display: flex; gap: 1rem; align-items: center; background: #F4F7FE; padding: 1rem; border-radius: 12px; border: 2px dashed #E0E5F2; transition: all 0.3s;">
+                            <div id="imagePreviewContainer"
+                                style="width: 80px; height: 80px; border-radius: 8px; background: #E0E5F2; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                                <img id="pPreview" src="assets/images/products/generic-fertilizer.jpg"
+                                    style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                <svg id="previewPlaceholder" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="#A3AED0" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="file" id="pImageUpload" class="form-input" accept="image/*"
+                                    style="border: none; padding: 0; background: transparent;"
+                                    onchange="SellerDashboard.handleImagePreview(this)">
+                                <p style="font-size: 0.75rem; color: #A3AED0; margin: 4px 0 0 0;">Upload product photo
+                                    (PNG, JPG). Max 2MB.</p>
+                                <input type="hidden" id="pImgBase64">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Product</button>
+                    <button type="button" class="btn btn-outline" style="flex: 1;"
+                        onclick="SellerDashboard.closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/script.js"></script>
+    <script src="js/seller-dashboard.js"></script>
+</body>
+
+</html>

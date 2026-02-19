@@ -4,21 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messages | Admin Dashboard</title>
+    <title>Seller Requests | NutriRoot Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin-auth.js"></script>
-    <script src="js/admin-messages.js"></script>
+    <script src="js/admin-seller-requests.js"></script>
 </head>
 
 <body>
-    <!-- Top Navigation -->
     <nav class="navbar">
         <a href="admin.html" class="navbar-brand"
             style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
@@ -32,7 +30,6 @@
             <span
                 style="font-weight: 600; color: var(--secondary-color); font-size: 0.9rem; border-left: 1px solid #E0E5F2; padding-left: 10px;">Admin</span>
         </a>
-
         <div class="user-profile">
             <button class="btn-icon" onclick="toggleProfileMenu()" id="profileBtn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -45,13 +42,27 @@
                     <span class="user-name" id="adminUserName">Admin</span>
                     <span class="user-email" id="adminUserEmail">admin@example.com</span>
                 </div>
-                <a href="dashboard.html" class="dropdown-item">User Dashboard</a>
-                <a href="#" onclick="signOut()" class="dropdown-item danger">Sign Out</a>
+                <a href="dashboard.html" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    User Dashboard
+                </a>
+                <div style="border-top: 1px solid #F4F7FE; margin: 0.5rem 0;"></div>
+                <a href="#" onclick="signOut()" class="dropdown-item danger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sign Out
+                </a>
             </div>
         </div>
     </nav>
-
-    <!-- Admin Sidebar -->
     <aside class="admin-sidebar">
         <div class="admin-sidebar-header">
             <div class="admin-sidebar-title">
@@ -73,20 +84,13 @@
                 </svg>
                 Overview
             </a>
-            <a href="admin-seller-requests.html" class="admin-nav-link">
+            <a href="admin-seller-requests.html" class="admin-nav-link active">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="8.5" cy="7" r="4"></circle>
                     <polyline points="17 11 19 13 23 9"></polyline>
                 </svg>
                 Seller Requests
-            </a>
-            <a href="admin-messages.html" class="admin-nav-link active">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-                Messages
             </a>
             <a href="admin-users.html" class="admin-nav-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -103,30 +107,16 @@
                 </svg>
                 Crops
             </a>
-            <a href="admin-analytics.html" class="admin-nav-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
-                Analytics
-            </a>
         </nav>
     </aside>
-
-    <!-- Main Content -->
     <main class="admin-main-content">
         <div class="dashboard-header">
             <div>
-                <h1 class="page-title">Messages</h1>
-                <p class="page-subtitle">View and manage inquiries from the contact form</p>
+                <h1 class="page-title">Seller Registration Requests</h1>
+                <p class="page-subtitle">Review and approve new fertilizer shop applications</p>
             </div>
             <div class="header-actions">
-                <div class="search-box">
-                    <input type="text" id="messageSearchInput" placeholder="Search messages..."
-                        onkeyup="handleMessageSearch()">
-                </div>
-                <button class="btn btn-outline" onclick="loadMessages()">
+                <button class="btn btn-outline" onclick="loadRequests()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M23 4v6h-6"></path>
                         <path d="M1 20v-6h6"></path>
@@ -138,50 +128,58 @@
         </div>
 
         <div class="admin-table-container">
+            <div class="admin-table-header">
+                <h2 class="admin-table-title">Pending Applications</h2>
+                <div class="admin-search-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" placeholder="Search shops..." oninput="searchRequests(this.value)">
+                </div>
+            </div>
             <table class="admin-table">
                 <thead>
                     <tr>
+                        <th>Shop Details</th>
+                        <th>Owner</th>
+                        <th>TIN / Document</th>
                         <th>Date</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Subject</th>
-                        <th>Message Preview</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="messagesTableBody">
-                    <!-- Messages populated via JS -->
+                <tbody id="requestsTableBody">
+                    <tr>
+                        <td colspan="5" class="admin-loading">
+                            <div class="admin-spinner"></div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </main>
 
-    <!-- Message Detail Modal -->
-    <div id="messageModal" class="modal-overlay">
-        <div class="auth-card" style="max-width: 600px;">
-            <div class="auth-header">
-                <h2 class="auth-title" id="msgModalSubject">Subject</h2>
-                <div class="auth-subtitle" id="msgModalSender">From: Name (email)</div>
-                <div style="font-size: 0.8rem; color: #999; margin-top: 5px;" id="msgModalDate">Date</div>
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="admin-modal-overlay">
+        <div class="admin-modal admin-confirm-dialog">
+            <div class="admin-confirm-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
             </div>
-
-            <div style="background: #F9FAFC; padding: 1.5rem; border-radius: 12px; border: 1px solid #E0E5F2; margin-bottom: 2rem; white-space: pre-wrap; color: #2C2C2C; line-height: 1.6;"
-                id="msgModalBody">
-                Message content...
-            </div>
-
-            <div style="display: flex; gap: 1rem;">
-                <a href="#" id="replyBtn" class="btn-auth-primary"
-                    style="text-decoration: none; text-align: center; display: block;">Reply via Email</a>
-                <button onclick="closeMessageModal()" class="btn-auth-primary"
-                    style="background: white; color: var(--primary-color); border: 1px solid #E0E5F2;">Close</button>
+            <h2 class="admin-modal-title">Reject Application</h2>
+            <p class="admin-confirm-message">
+                Are you sure you want to reject <strong id="rejectShopName"></strong>? This will permanently remove the
+                application.
+            </p>
+            <input type="hidden" id="rejectUserId">
+            <div class="admin-form-actions">
+                <button type="button" class="btn btn-outline" onclick="closeRejectModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" style="background: var(--accent-red);"
+                    onclick="rejectSeller()">Reject Now</button>
             </div>
         </div>
     </div>
-
-    <!-- Notification Toast Container -->
-    <div class="notification-container"></div>
 </body>
 
 </html>
-Riverside

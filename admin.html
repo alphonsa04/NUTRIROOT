@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/validation-utils.js"></script>
     <script src="js/admin-auth.js"></script>
 </head>
 
@@ -88,6 +89,14 @@
                     <rect x="3" y="14" width="7" height="7"></rect>
                 </svg>
                 Overview
+            </a>
+            <a href="admin-seller-requests.html" class="admin-nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+                Seller Requests
             </a>
             <a href="admin-messages.html" class="admin-nav-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -183,16 +192,30 @@
                 </div>
             </div>
 
-            <div class="admin-stat-card">
+            <div class="admin-stat-card clickable" onclick="window.location.href='admin-seller-requests.html'">
                 <div class="admin-stat-icon orange">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2.69l5.74 5.88-5.74 5.88-5.74-5.88z"></path>
-                        <path d="M2 22h20"></path>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <polyline points="17 11 19 13 23 9"></polyline>
                     </svg>
                 </div>
                 <div class="admin-stat-content">
-                    <h3 id="adminCount">2</h3>
-                    <p>Admin Users</p>
+                    <h3 id="pendingSellers">0</h3>
+                    <p>Seller Requests</p>
+                </div>
+            </div>
+
+            <div class="admin-stat-card clickable" onclick="window.location.href='admin-product-approvals.html'">
+                <div class="admin-stat-icon" style="background: rgba(5, 205, 205, 0.1); color: #008080;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                </div>
+                <div class="admin-stat-content">
+                    <h3 id="pendingProducts">0</h3>
+                    <p>Pending Products</p>
                 </div>
             </div>
         </div>
@@ -202,7 +225,16 @@
             <div class="admin-table-header">
                 <h2 class="admin-table-title">Quick Actions</h2>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <a href="admin-seller-requests.html" class="btn btn-outline"
+                    style="text-decoration: none; justify-content: center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <polyline points="17 11 19 13 23 9"></polyline>
+                    </svg>
+                    Seller Requests
+                </a>
                 <a href="admin-users.html" class="btn btn-outline"
                     style="text-decoration: none; justify-content: center;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -228,8 +260,18 @@
                     </svg>
                     View Analytics
                 </a>
+                <a href="admin-product-approvals.html" class="btn btn-outline"
+                    style="text-decoration: none; justify-content: center; background: rgba(5, 205, 153, 0.1); border-color: var(--accent-green);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)"
+                        stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Product Approvals
+                </a>
             </div>
         </div>
+
 
         <!-- Recent Submissions Table -->
         <div class="admin-table-container" style="margin-top: 2rem;">
@@ -308,7 +350,29 @@
                 document.getElementById('totalCrops').textContent = 'Error';
             }
 
-            // 3. Fetch Submissions (CollectionGroup requires index)
+            // 3. Fetch Pending Sellers
+            try {
+                const pendingSnapshot = await db.collection('users')
+                    .where('role', '==', 'seller')
+                    .where('shopStatus', '==', 'pending')
+                    .get();
+                document.getElementById('pendingSellers').textContent = pendingSnapshot.size;
+                console.log('Pending sellers sync complete:', pendingSnapshot.size);
+            } catch (err) {
+                console.error('Error fetching pending sellers:', err);
+                document.getElementById('pendingSellers').textContent = 'Error';
+            }
+
+            // 4. Fetch Pending Products
+            try {
+                const pendingProducts = await db.collection('products').where('status', '==', 'pending').get();
+                document.getElementById('pendingProducts').textContent = pendingProducts.size;
+            } catch (err) {
+                console.error('Pending products fetch failed:', err);
+                document.getElementById('pendingProducts').textContent = 'Error';
+            }
+
+            // 4. Fetch Submissions (CollectionGroup requires index)
             try {
                 const submissionsSnapshot = await db.collectionGroup('readings').get();
                 document.getElementById('totalSubmissions').textContent = submissionsSnapshot.size;
@@ -322,7 +386,7 @@
                 }
             }
 
-            // 4. Fetch Recent Submissions (Details)
+            // 5. Fetch Recent Submissions (Details)
             try {
                 const recentSnapshot = await db.collectionGroup('readings')
                     .orderBy('timestamp', 'desc')

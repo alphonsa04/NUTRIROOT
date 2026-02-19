@@ -13,17 +13,19 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/validation-utils.js"></script>
 
     <style>
         /* Shop Specific Styles */
         .shop-container {
             display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 2rem;
-            padding: 2rem 0;
-            max-width: 1200px;
+            grid-template-columns: 280px 1fr;
+            gap: 3rem;
+            padding: 2rem;
+            max-width: 1400px;
             margin: 90px auto 0;
             /* Adjusted for fixed navbar */
+            align-items: start;
         }
 
         .filters-sidebar {
@@ -322,6 +324,309 @@
                 width: 100%;
             }
         }
+
+        .order-history-section {
+            margin-top: 2rem;
+            display: none;
+            /* Hidden by default */
+        }
+
+        .view-active {
+            display: block !important;
+        }
+
+        .view-hidden {
+            display: none !important;
+        }
+
+        /* Amazon-style Order Details Styles */
+        .order-details-view {
+            background: #fff;
+            min-height: auto;
+            border: 1px solid #D5D9D9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .status-banner {
+            background: #fff;
+            padding: 1.5rem;
+            border-bottom: 8px solid #F0F2F2;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 4px;
+        }
+
+        .status-sub {
+            font-size: 0.9rem;
+            color: #565959;
+        }
+
+        .status-check {
+            width: 24px;
+            height: 24px;
+            background: #007600;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .order-product-card {
+            padding: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+            border-bottom: 1px solid #F0F2F2;
+        }
+
+        .order-product-image {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+
+        .order-product-info {
+            flex: 1;
+        }
+
+        .order-product-name {
+            font-size: 1rem;
+            color: #007185;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .share-link {
+            color: #007185;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+        }
+
+        .action-section {
+            padding: 1rem 1.5rem;
+            border-bottom: 8px solid #F0F2F2;
+        }
+
+        .action-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .action-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-top: 1px solid #F0F2F2;
+            text-decoration: none;
+            color: #0F1111;
+            font-size: 0.95rem;
+        }
+
+        .action-item:last-child {
+            border-bottom: 0;
+        }
+
+        .action-item svg {
+            color: #565959;
+        }
+
+        /* Nav Toggle Styles */
+        .shop-nav-toggle {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+            border-bottom: 2px solid #F4F7FE;
+            padding-bottom: 0.5rem;
+        }
+
+        .nav-toggle-btn {
+            background: none;
+            border: none;
+            padding: 0.75rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #A3AED0;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-toggle-btn.active {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .nav-toggle-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1rem;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-green);
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #007185;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Action Modal Styles */
+        .action-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .action-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .action-modal {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .action-overlay.active .action-modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Tracking Stepper */
+        .stepper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            width: 2px;
+            height: calc(100% - 8px);
+            background: #E0E5F2;
+        }
+
+        .step.active:not(:last-child)::after {
+            background: #05CD99;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #E0E5F2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            font-size: 12px;
+            color: white;
+        }
+
+        .step.active .step-icon {
+            background: #05CD99;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+        }
+
+        .step-desc {
+            font-size: 0.85rem;
+            color: #A3AED0;
+        }
+
+        /* Form Styles */
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-form label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+
+        .modal-form textarea,
+        .modal-form select {
+            padding: 0.75rem;
+            border-radius: 12px;
+            border: 1px solid #E0E5F2;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .modal-form textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
     </style>
 </head>
 
@@ -455,29 +760,55 @@
 
         <!-- Product Grid -->
         <main>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <div>
-                    <h1 class="page-title" style="margin-bottom: 0.25rem;">Fertilizer Shop</h1>
-                    <p class="page-subtitle">Quality inputs for better yields</p>
+            <!-- View Toggle -->
+            <div class="shop-nav-toggle">
+                <button class="nav-toggle-btn active" id="btnBrowse" onclick="ShopUI.showShop()">Browse
+                    Products</button>
+                <button class="nav-toggle-btn" id="btnOrders" onclick="ShopUI.showOrders()">My Orders</button>
+            </div>
+
+            <div id="shopMainView">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h1 class="page-title" style="margin-bottom: 0.25rem;">Fertilizer Shop</h1>
+                        <p class="page-subtitle">Quality inputs for better yields</p>
+                    </div>
+                    <!-- Search -->
+                    <div style="position: relative;">
+                        <input type="text" id="shopSearch" placeholder="Search products..."
+                            oninput="ShopUI.filterProducts()"
+                            style="padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 12px; border: 1px solid #E0E5F2; width: 250px;">
+                        <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #A3AED0;"
+                            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
                 </div>
-                <!-- Search -->
-                <div style="position: relative;">
-                    <input type="text" id="shopSearch" placeholder="Search products..."
-                        oninput="ShopUI.filterProducts()"
-                        style="padding: 0.75rem 1rem 0.75rem 2.5rem; border-radius: 12px; border: 1px solid #E0E5F2; width: 250px;">
-                    <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #A3AED0;"
-                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
+
+                <div id="productsGrid" class="products-grid">
+                    <!-- Products loaded via JS -->
+                    <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                        <div class="loader"></div>
+                        <p>Loading products...</p>
+                    </div>
                 </div>
             </div>
 
-            <div id="productsGrid" class="products-grid">
-                <!-- Products loaded via JS -->
-                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-                    <div class="loader"></div>
-                    <p>Loading products...</p>
+            <!-- Enhanced Orders View -->
+            <div id="ordersView" class="view-hidden">
+                <div id="ordersListView">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h2 class="section-title">My Orders</h2>
+                    </div>
+                    <div id="orderHistoryGrid">
+                        <!-- Orders loaded via JS -->
+                    </div>
+                </div>
+
+                <div id="orderDetailsView" class="view-hidden">
+                    <!-- Detail View populated via JS -->
                 </div>
             </div>
         </main>
@@ -516,6 +847,24 @@
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="ShopUI.checkout()">
                 Proceed to Checkout
             </button>
+        </div>
+    </div>
+
+    <!-- Action Modal -->
+    <div class="action-overlay" id="actionOverlay">
+        <div class="action-modal" id="actionModal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="actionModalTitle">Action</h3>
+                <button class="btn-icon" onclick="ShopUI.closeActionModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="actionModalBody">
+                <!-- Dynamic Content -->
+            </div>
         </div>
     </div>
 

@@ -88,6 +88,7 @@ function showModal(title, message, type = 'info', onClose = null) {
     if (!modal) return;
 
     const icon = modal.querySelector('.modal-icon');
+    icon.innerHTML = ''; // Clear previous icon content
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalMessage').textContent = message;
 
@@ -176,32 +177,30 @@ function signInWithGoogle() {
         });
 }
 
-// 2. Email/Password Registration
+// 2. Email/Password Registration (Farmer)
 function registerWithEmail(fullName, email, password) {
-    // Rely on native HTML5 validation attributes in index.html
+    // Rely on native HTML5 validation attributes
     const form = document.getElementById('registerForm');
     if (form && !form.reportValidity()) {
-        return; // Browser will show validation bubbles
+        return;
     }
 
     auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
             const user = userCredential.user;
-
-            // Update the display name in Firebase Auth
-            user.updateProfile({
+            return user.updateProfile({
                 displayName: fullName
             }).then(() => {
-                // Save additional user data to Firestore
-                return saveUserToFirestore(user, fullName);
+                return saveUserToFirestore(user, fullName, 'farmer');
             }).then(() => {
-                // Sign out so they have to log in manually
-                // and redirect via callback
                 return auth.signOut();
             }).then(() => {
-                showModal('Success!', 'Registration successful! Please login.', 'success', () => {
-                    // Stay on index page and switch to login modal
-                    switchModal('login');
+                showModal('Success!', 'Registration successful! Please login as Farmer.', 'success', () => {
+                    if (window.location.pathname.includes('register.html')) {
+                        window.location.href = 'index.html';
+                    } else {
+                        switchModal('login');
+                    }
                 });
             });
         })
@@ -223,20 +222,77 @@ function registerWithEmail(fullName, email, password) {
         });
 }
 
+// 2b. Seller Registration
+function registerSeller(sellerPayload) {
+    const { email, password, firstName, lastName, phone, shopName, shopAddress, tin, tinExpireDate } = sellerPayload;
+    const fullName = `${firstName} ${lastName}`;
+
+    return auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            const user = userCredential.user;
+            const sellerData = {
+                firstName,
+                lastName,
+                phone,
+                shopName,
+                shopAddress,
+                tin,
+                tinExpireDate,
+                role: 'seller',
+                shopStatus: 'pending', // New sellers might need approval in a real flow
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            return user.updateProfile({
+                displayName: fullName
+            }).then(() => {
+                return saveUserToFirestore(user, fullName, 'seller', sellerData);
+            }).then(() => {
+                return auth.signOut();
+            }).then(() => {
+                showModal('Success!', 'Seller account application submitted! Please login.', 'success', () => {
+                    window.location.href = 'index.html';
+                });
+            });
+        })
+        .catch((error) => {
+            console.error('Seller registration error:', error);
+            showModal('Registration Failed', error.message, 'error');
+            throw error;
+        });
+}
+window.registerSeller = registerSeller;
+
 // 3. Email/Password Login
 function signInWithEmail(email, password) {
-    // Rely on native HTML5 validation attributes in index.html
     const form = document.getElementById('loginForm');
     if (form && !form.reportValidity()) {
-        return; // Browser will show validation bubbles
+        return;
     }
 
     auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
-            console.log('Login successful:', userCredential.user);
-            // Sync user to Firestore if missing
-            return saveUserToFirestore(userCredential.user).then(() => {
-                window.location.href = 'dashboard.html';
+            const user = userCredential.user;
+            return db.collection('users').doc(user.uid).get().then(doc => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    const role = userData.role;
+
+                    if (role === 'seller') {
+                        if (userData.shopStatus === 'active') {
+                            window.location.href = 'seller-dashboard.html';
+                        } else {
+                            // If not active, sign them out and show message
+                            auth.signOut();
+                            showModal('Account Pending', 'Your seller account is awaiting administrator approval. Please try again later.', 'info');
+                        }
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                } else {
+                    // Default to farmer dashboard if missing doc
+                    window.location.href = 'dashboard.html';
+                }
             });
         })
         .catch((error) => {
@@ -318,28 +374,30 @@ window.signOut = signOut; // Ensure global availability
    ======================================== */
 
 // Save or Update User in Firestore
-function saveUserToFirestore(user, specificName = null) {
+function saveUserToFirestore(user, specificName = null, role = 'farmer', additionalData = {}) {
     const userRef = db.collection('users').doc(user.uid);
 
     return userRef.get().then((doc) => {
         if (!doc.exists) {
             // Create new user document
-            return userRef.set({
+            const baseData = {
                 uid: user.uid,
                 name: specificName || user.displayName || "No Name",
                 email: user.email,
-                photoURL: user.photoURL || "assets/images/default-avatar.png",
+                photoURL: user.photoURL || "assets/images/default-avatar.svg",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                role: "farmer"
-            })
+                role: role
+            };
+
+            const fullData = { ...baseData, ...additionalData };
+
+            return userRef.set(fullData)
                 .then(() => {
-                    console.log("User successfully stored in Firestore!");
+                    console.log("User successfully stored in Firestore with role:", role);
                 });
-        } else {
-            console.log("User already exists in db.");
         }
     }).catch((error) => {
-        console.error("Error getting document:", error);
+        console.error("Error saving user document:", error);
     });
 }
 
@@ -370,56 +428,46 @@ window.addEventListener('click', (e) => {
    State Listener & UI Updates
    ======================================== */
 function updateProfileUI(user) {
-    if (!user) {
-        console.log('updateProfileUI: No user provided');
-        return;
-    }
+    if (!user) return;
 
-    console.log('updateProfileUI: Attempting to populate dropdown for:', user.email);
-    const nameEl = document.getElementById('dropdownUserName');
-    const emailEl = document.getElementById('dropdownUserEmail');
-    const premiumBadge = document.getElementById('premiumBadge');
+    const userRef = db.collection('users').doc(user.uid);
+    userRef.get().then((doc) => {
+        if (doc.exists) {
+            const userData = doc.data();
+            const displayName = userData.name || user.displayName || "User";
+            const displayEmail = user.email || userData.email || "";
+            const photoURL = userData.photoURL || user.photoURL || "assets/images/default-avatar.svg";
 
-    if (nameEl && emailEl) {
-        // Set initial values
-        const initialName = user.displayName || "Farmer";
-        emailEl.textContent = user.email;
-        console.log('updateProfileUI: UI updated successfully with:', user.email);
+            // List of various IDs used across different pages
+            const nameIDs = ['dropdownUserName', 'adminUserName', 'sellerName', 'sellerShopName'];
+            const emailIDs = ['dropdownUserEmail', 'adminUserEmail', 'sellerEmail'];
+            const imgIDs = ['dropdownProfileImg', 'adminProfileImg', 'sellerProfileImg'];
 
-        // Fetch user data from Firestore to check premium status and custom name
-        const userRef = db.collection('users').doc(user.uid);
-        userRef.get().then((doc) => {
-            if (doc.exists) {
-                const userData = doc.data();
+            // Update Names
+            nameIDs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = (id === 'sellerShopName' && userData.role === 'seller') ? (userData.shopName || displayName) : displayName;
+            });
 
-                // Update name if available (but preserve the badge element)
-                const displayName = userData.name || initialName;
+            // Update Emails
+            emailIDs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = displayEmail;
+            });
 
-                // Clear and rebuild the name element content
-                nameEl.textContent = displayName;
+            // Update Images
+            imgIDs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.src = photoURL;
+            });
 
-                // Show premium badge if user is premium
-                if (premiumBadge) {
-                    if (userData.isPremium === true) {
-                        premiumBadge.style.display = 'inline-block';
-                        console.log('updateProfileUI: Premium badge shown for user:', userData.isPremium);
-                    } else {
-                        premiumBadge.style.display = 'none';
-                        console.log('updateProfileUI: Premium badge hidden, isPremium:', userData.isPremium);
-                    }
-                } else {
-                    console.warn('updateProfileUI: Premium badge element not found');
-                }
-
-                console.log('updateProfileUI: Name updated from Firestore:', displayName);
-            } else {
-                console.warn('updateProfileUI: User document does not exist in Firestore');
-                nameEl.textContent = initialName;
+            // Update Premium Badge if it exists
+            const premiumBadge = document.getElementById('premiumBadge');
+            if (premiumBadge) {
+                premiumBadge.style.display = userData.isPremium === true ? 'inline-block' : 'none';
             }
-        }).catch(err => console.error('Error fetching user data from Firestore:', err));
-    } else {
-        console.warn('updateProfileUI: Dropdown elements NOT found. (nameEl:', !!nameEl, 'emailEl:', !!emailEl, ')');
-    }
+        }
+    }).catch(err => console.error('Error fetching user data from Firestore:', err));
 }
 
 // Global variable to store current user for re-checks
@@ -429,11 +477,44 @@ auth.onAuthStateChanged((user) => {
     _currentUser = user;
     if (user) {
         console.log('Auth: User is logged in:', user.email);
+
+        // Role-based route guard
+        db.collection('users').doc(user.uid).get().then(doc => {
+            const userData = doc.exists ? doc.data() : { role: 'farmer' };
+            const role = userData.role;
+            const path = window.location.pathname;
+
+            if (role === 'seller') {
+                // Check approval status
+                if (userData.shopStatus !== 'active') {
+                    console.log('Auth: Seller account not active, signing out.');
+                    auth.signOut();
+                    if (!path.includes('index.html') && path !== '/') {
+                        window.location.href = 'index.html';
+                    }
+                    return;
+                }
+
+                // If seller is on farmer pages, redirect to seller dashboard
+                // Use regex to ensure we only match the specific farmer dashboard file, not seller-dashboard.html
+                const isFarmerPage = /\/(dashboard|crops|recommendation|history|alerts)\.html$/.test(path);
+                if (isFarmerPage) {
+                    window.location.href = 'seller-dashboard.html';
+                }
+            } else if (role === 'farmer') {
+                // If farmer is on seller pages, redirect to farmer dashboard
+                if (path.includes('seller-dashboard.html')) {
+                    window.location.href = 'dashboard.html';
+                }
+            }
+        });
+
         startPersistentUpdate(user);
     } else {
         console.log('Auth: No user logged in');
         const path = window.location.pathname;
-        if (path.includes('dashboard.html') || path.includes('crops.html') || path.includes('recommendation.html') || path.includes('history.html') || path.includes('alerts.html')) {
+        const protectedPages = ['dashboard.html', 'crops.html', 'recommendation.html', 'history.html', 'alerts.html', 'seller-dashboard.html', 'admin.html', 'admin-seller-requests.html'];
+        if (protectedPages.some(p => path.includes(p))) {
             window.location.href = 'index.html';
         }
     }
@@ -441,40 +522,21 @@ auth.onAuthStateChanged((user) => {
 
 /**
  * Retries updating the UI until elements are found and updated
- * This solves race conditions where DOM might not be ready or 
- * elements might be temporarily missing.
  */
 function startPersistentUpdate(user) {
-    if (!user) return;
-
     // Initial attempt
     updateProfileUI(user);
 
-    // Retry for a few seconds to be absolutely sure
+    // Retry for a few seconds to handle dynamic loading
     let attempts = 0;
-    const maxAttempts = 15;
+    const maxAttempts = 10;
     const interval = setInterval(() => {
         attempts++;
-
-        const emailEl = document.getElementById('dropdownUserEmail');
-        if (emailEl && emailEl.textContent === user.email) {
-            // Already updated correctly
-            console.log('Auth: Profile UI successfully verified.');
-            clearInterval(interval);
-            return;
-        }
-
-        console.log('Auth: Retrying profile update (attempt ' + attempts + ')...');
         updateProfileUI(user);
-
-        if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            console.warn('Auth: Persistent update stopped after max attempts.');
-        }
-    }, 1000); // Check every second
+        if (attempts >= maxAttempts) clearInterval(interval);
+    }, 1000);
 }
 
-// Re-check after DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     if (_currentUser) {
         startPersistentUpdate(_currentUser);

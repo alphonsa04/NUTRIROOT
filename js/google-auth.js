@@ -19,7 +19,7 @@ function handleCredentialResponse(response) {
         window.location.href = "dashboard.html";
     } catch (error) {
         console.error("Error processing Google Sign-In:", error);
-        alert("There was an error signing in with Google. Please try again.");
+        ValidationEngine.showNotification("There was an error signing in with Google. Please try again.", "error");
     }
 }
 

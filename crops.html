@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/validation-utils.js"></script>
     <script src="js/admin-auth.js"></script>
 </head>
 
@@ -124,11 +125,7 @@
                 <div class="card-glow"></div>
                 <div class="section-card-header">
                     <div class="header-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
+                        <img src="assets/images/tree-logo.png" alt="NutriRoot Logo">
                     </div>
                     <div>
                         <h2 class="section-card-title">Enter Soil Data for Crop Recommendations</h2>
@@ -171,37 +168,18 @@
                             </div>
                         </div>
                         <div class="input-group">
-                            <label for="crops_ec">EC <span class="unit">(Conductivity)</span></label>
-                            <div class="input-wrapper">
-                                <input type="number" step="0.01" id="crops_ec" required placeholder="0.00" min="0"
-                                    max="10">
-                                <span class="input-suffix">dS/m</span>
-                            </div>
-                        </div>
-                        <div class="input-group">
                             <label for="crops_moisture">Moisture</label>
                             <div class="input-wrapper">
                                 <input type="number" step="0.1" id="crops_moisture" required placeholder="0.0">
                                 <span class="input-suffix">%</span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="input-group">
                             <label for="crops_temperature">Temperature</label>
                             <div class="input-wrapper">
                                 <input type="number" step="0.1" id="crops_temperature" required placeholder="25.0">
                                 <span class="input-suffix">°C</span>
                             </div>
-                        </div>
-                        <div class="input-group" style="visibility: hidden;">
-                            <label>&nbsp;</label>
-                            <div class="input-wrapper"></div>
-                        </div>
-                        <div class="input-group" style="visibility: hidden;">
-                            <label>&nbsp;</label>
-                            <div class="input-wrapper"></div>
                         </div>
                     </div>
 

@@ -17,7 +17,7 @@ const AIChatbot = {
         - Use simple, farmer-friendly, and professional language.
         - Be accurate and follow standard agronomic practices.
         - Emphasize the 4R Fertilizer Stewardship (Right Source, Right Rate, Right Time, Right Place).
-        - Interpret soil parameters: NPK (Nitrogen, Phosphorus, Potassium), pH, Moisture, Temperature, and EC (Electrical Conductivity).
+        - Interpret soil parameters: NPK (Nitrogen, Phosphorus, Potassium), pH, Moisture, and Temperature.
         - CLEARLY STATE: "I am an AI assistant providing informational guidance. For critical decisions, please consult with a local certified agronomist."
         - Avoid unsafe or unverified advice.
         
@@ -243,7 +243,7 @@ const AIChatbot = {
             const latestSoil = await this.getLatestSoilDataForContext();
 
             if (latestSoil) {
-                contextText = `[USER SOIL DATA]: Target Crop: ${latestSoil.crop}, N: ${latestSoil.nitrogen}, P: ${latestSoil.phosphorus}, K: ${latestSoil.potassium}, pH: ${latestSoil.ph}, EC: ${latestSoil.ec || 'N/A'}, Moisture: ${latestSoil.moisture}%, Temp: ${latestSoil.temperature}°C. Recorded on: ${new Date(latestSoil.timestamp).toLocaleDateString()}.\n\n`;
+                contextText = `[USER SOIL DATA]: Target Crop: ${latestSoil.crop}, N: ${latestSoil.nitrogen}, P: ${latestSoil.phosphorus}, K: ${latestSoil.potassium}, pH: ${latestSoil.ph}, Moisture: ${latestSoil.moisture}%, Temp: ${latestSoil.temperature}°C. Recorded on: ${new Date(latestSoil.timestamp).toLocaleDateString()}.\n\n`;
             }
 
             const response = await fetch(this.config.endpoint, {

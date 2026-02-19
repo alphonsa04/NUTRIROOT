@@ -14,7 +14,7 @@ const PaymentGateway = {
     showPlanSelection(callback) {
         const user = firebase.auth().currentUser;
         if (!user) {
-            alert("Please log in to see premium plans.");
+            ValidationEngine.showNotification("Please log in to see premium plans.", "error");
             return;
         }
 
@@ -134,7 +134,7 @@ const PaymentGateway = {
     startShopPayment(amount, itemCount, callback) {
         const user = firebase.auth().currentUser;
         if (!user) {
-            alert("Please log in to purchase items.");
+            ValidationEngine.showNotification("Please log in to purchase items.", "error");
             return;
         }
 
@@ -164,13 +164,13 @@ const PaymentGateway = {
         };
 
         if (typeof Razorpay === 'undefined') {
-            alert("Razorpay SDK not loaded. Please check your internet connection.");
+            ValidationEngine.showNotification("Razorpay SDK not loaded. Please check your internet connection.", "error");
             return;
         }
 
         const rzp = new Razorpay(options);
         rzp.on('payment.failed', function (response) {
-            alert("Payment Failed: " + response.error.description);
+            ValidationEngine.showNotification("Payment Failed: " + response.error.description, "error");
         });
         rzp.open();
     },
@@ -208,13 +208,13 @@ const PaymentGateway = {
         };
 
         if (typeof Razorpay === 'undefined') {
-            alert("Razorpay SDK not loaded.");
+            ValidationEngine.showNotification("Razorpay SDK not loaded.", "error");
             return;
         }
 
         const rzp = new Razorpay(options);
         rzp.on('payment.failed', function (response) {
-            alert("Payment Failed: " + response.error.description);
+            ValidationEngine.showNotification("Payment Failed: " + response.error.description, "error");
         });
         rzp.open();
     }

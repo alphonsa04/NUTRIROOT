@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Registration - NutriRoot</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/seller-auth.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/phone-picker.js"></script>
+    <script src="js/validation-utils.js"></script>
+</head>
+
+<body class="seller-auth-body">
+    <div class="multi-step-container">
+
+        <!-- STEP 1: ACCOUNT CREATION -->
+        <div id="step1" class="step-split">
+            <div class="step-split-left">
+                <div class="nutriroot-logo-text">
+                    <span class="logo-part">NUTR</span>
+                    <span class="logo-plant-container">
+                        <img src="assets/images/tree-logo.png" alt="Tree" class="logo-plant-img">
+                    </span>
+                    <span class="logo-part">ROOT</span>
+                </div>
+                <div style="flex: 1;"></div>
+                <div class="vendor-left-divider"></div>
+                <span class="vendor-left-badge">&#x2713; Seller Portal</span>
+                <h1>Vendor Registration</h1>
+                <p>Create your own store. Already have store? <a href="index.html" class="link-primary"
+                        style="font-weight: 700;">Login</a></p>
+            </div>
+            <div class="step-split-right">
+                <h2 class="section-title">Create An Account</h2>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="reg-label" for="email">Email <span>*</span></label>
+                        <input type="email" id="email" class="reg-input" placeholder="Ex: example@gmail.com" required>
+                    </div>
+                    <div class="form-group" style="position: relative;">
+                        <label class="reg-label" for="phoneNumber">Phone <span>*</span></label>
+                        <div class="phone-input-wrapper" id="phoneWrapper">
+                            <!-- Country trigger button -->
+                            <button type="button" class="country-trigger" id="countryTrigger">
+                                <span id="selectedFlag">🇮🇳</span>
+                                <span id="selectedCode">+91</span>
+                            </button>
+                            <div class="phone-divider"></div>
+                            <!-- Actual number input -->
+                            <input type="tel" id="phoneNumber" class="phone-number-input"
+                                placeholder="Enter phone number" required>
+                            <!-- Hidden field stores full international number for submission -->
+                            <input type="hidden" id="phone" name="phone">
+                        </div>
+                        <!-- Searchable dropdown panel -->
+                        <div class="country-dropdown" id="countryDropdown">
+                            <input type="text" class="country-search" id="countrySearch"
+                                placeholder="Search country...">
+                            <ul class="country-list" id="countryList"></ul>
+                        </div>
+                        <span class="phone-error" id="phoneError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="reg-label" for="password">Password <span>*</span></label>
+                        <div class="input-icon-wrapper">
+                            <input type="password" id="password" class="reg-input"
+                                placeholder="Minimum 8 characters long" required minlength="8">
+                            <svg class="input-icon-end" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" onclick="togglePass('password')">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="reg-label" for="confirmPassword">Confirm Password <span>*</span></label>
+                        <div class="input-icon-wrapper">
+                            <input type="password" id="confirmPassword" class="reg-input" placeholder="Confirm password"
+                                required minlength="8">
+                            <svg class="input-icon-end" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" onclick="togglePass('confirmPassword')">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-btns">
+                    <button class="btn-proceed" onclick="navigate(2)">Proceed To Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: VENDOR INFORMATION -->
+        <div id="step2" class="step-section step-hidden">
+            <h2 class="section-title" style="font-size: 2rem;">Create an account</h2>
+            <div class="section-box">
+                <h3 class="section-label">Vendor information</h3>
+                <div class="vendor-info-row">
+                    <div class="vendor-info-inputs" style="flex: 1;">
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="reg-label">First name <span>*</span></label>
+                            <input type="text" id="firstName" class="reg-input" placeholder="Ex: John">
+                        </div>
+                        <div class="form-group">
+                            <label class="reg-label">Last name <span>*</span></label>
+                            <input type="text" id="lastName" class="reg-input" placeholder="Ex: Doe">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-btns">
+                <button class="btn-back" onclick="navigate(1)">Back</button>
+                <button class="btn-proceed" onclick="navigate(3)">Proceed To Next</button>
+            </div>
+        </div>
+
+        <!-- STEP 3: SHOP INFORMATION -->
+        <div id="step3" class="step-section step-hidden">
+            <h2 class="section-title">Shop Information</h2>
+            <div class="section-box">
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="reg-label">Shop Name <span>*</span></label>
+                    <input type="text" id="shopName" class="reg-input" placeholder="Ex: XYZ store">
+                </div>
+                <div class="form-group">
+                    <label class="reg-label">Shop Address <span>*</span></label>
+                    <textarea id="shopAddress" class="reg-input" style="height: 120px; resize: none;"
+                        placeholder="Shop address"></textarea>
+                </div>
+            </div>
+            <div class="footer-btns">
+                <button class="btn-back" onclick="navigate(2)">Back</button>
+                <button class="btn-proceed" onclick="navigate(4)">Proceed To Next</button>
+            </div>
+        </div>
+
+        <!-- STEP 4: BUSINESS INFORMATION -->
+        <div id="step4" class="step-section step-hidden">
+            <h2 class="section-title">Business Information</h2>
+            <div class="section-box">
+                <h3 class="section-label">Business TIN</h3>
+                <div class="vendor-info-row">
+                    <div class="vendor-info-inputs">
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="reg-label">Taxpayer Identification Number(TIN) <span>*</span></label>
+                            <input type="text" id="tin" class="reg-input" placeholder="Type your TIN">
+                        </div>
+                        <div class="form-group">
+                            <label class="reg-label">Expire Date <span>*</span></label>
+                            <div class="input-icon-wrapper">
+                                <input type="date" id="tinExpireDate" class="reg-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vendor-info-upload">
+                        <div class="upload-box upload-box-tin" onclick="document.getElementById('tinFile').click()">
+                            <input type="file" id="tinFile" style="display: none;" accept=".pdf,.doc,.docx,.jpg,.jpeg"
+                                onchange="handleFileSelect(this, 'tinFileName')">
+                            <div class="upload-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A3AED0"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
+                            <span id="tinFileName" style="font-size: 0.85rem; color: #A3AED0; font-weight: 500;">Select
+                                a file or Drag and Drop here</span>
+                        </div>
+                        <p style="margin-top: 1rem; font-weight: 700; font-size: 0.9rem; color: #333;">TIN CERTIFICATE
+                            <span>*</span>
+                        </p>
+                        <p style="font-size: 0.8rem; color: #A3AED0;">Pdf, Doc, Jpg. File Size : Max 5 MB</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <label class="checkbox-label"
+                    style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+                    <input type="checkbox" id="agreeTerms" required>
+                    <span>I agree with the <a href="#" class="link-primary">Terms & conditions</a></span>
+                </label>
+            </div>
+
+            <div class="footer-btns" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="navigate(3)">Back</button>
+                <button class="btn-submit" onclick="submitRegistration()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Scripts -->
+    <script>
+        function togglePass(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function handleFileSelect(input, displayId) {
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                const display = document.getElementById(displayId);
+                display.textContent = fileName;
+                display.style.color = '#1A3C25';
+                display.style.fontWeight = '700';
+            }
+        }
+
+        function navigate(step) {
+            const currentStep = document.querySelector('.step-split:not(.step-hidden), .step-section:not(.step-hidden)');
+            if (step > 1 && currentStep) {
+                const currentStepId = currentStep.id;
+                const rules = document.getElementById(currentStepId)._validationRules;
+
+                if (rules) {
+                    let isValid = true;
+                    Object.keys(rules).forEach(fieldId => {
+                        const field = document.getElementById(fieldId);
+                        if (field && !ValidationEngine.validateField(field, rules[fieldId])) {
+                            isValid = false;
+                        }
+                    });
+                    if (!isValid) return;
+                }
+            }
+
+            // Hide all
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById('step' + i).classList.add('step-hidden');
+            }
+            // Show target
+            document.getElementById('step' + step).classList.remove('step-hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function submitRegistration() {
+            const agree = document.getElementById('agreeTerms').checked;
+            const agreeMsg = document.getElementById('agreeTermsMsg') || (function () {
+                const s = document.createElement('span');
+                s.id = 'agreeTermsMsg';
+                s.className = 'validation-msg error';
+                document.getElementById('agreeTerms').parentNode.appendChild(s);
+                return s;
+            })();
+
+            if (!agree) {
+                agreeMsg.textContent = 'Please agree to terms and conditions';
+                return;
+            } else {
+                agreeMsg.textContent = '';
+            }
+
+            // Collect all data
+            const payload = {
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('password').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                shopName: document.getElementById('shopName').value,
+                shopAddress: document.getElementById('shopAddress').value,
+                tin: document.getElementById('tin').value,
+                tinExpireDate: document.getElementById('tinExpireDate').value
+            };
+
+            // Call auth.js function
+            if (typeof registerSeller === 'function') {
+                registerSeller(payload).catch(err => {
+                    console.error("Submission failed", err);
+                });
+            } else {
+                console.error('Auth system not loaded');
+            }
+        }
+
+        // Initialize Real-time Validation
+        document.addEventListener('DOMContentLoaded', () => {
+            ValidationEngine.init('step1', {
+                'email': {
+                    required: true,
+                    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    patternMsg: 'Please enter a valid email address'
+                },
+                'password': {
+                    required: true,
+                    minLength: 8,
+                    minLengthMsg: 'Password must be at least 8 characters'
+                },
+                'confirmPassword': {
+                    required: true,
+                    custom: (val) => {
+                        const pass = document.getElementById('password').value;
+                        return val === pass ? '' : 'Passwords do not match';
+                    }
+                }
+            });
+
+            // Also check password match when main password changes
+            document.getElementById('password').addEventListener('input', () => {
+                const confirmField = document.getElementById('confirmPassword');
+                if (confirmField.value) {
+                    ValidationEngine.validateField(confirmField, {
+                        custom: (val) => val === document.getElementById('password').value ? '' : 'Passwords do not match'
+                    });
+                }
+            });
+
+            ValidationEngine.init('step2', {
+                'firstName': {
+                    required: true,
+                    minLength: 2,
+                    minLengthMsg: 'First name must be at least 2 characters'
+                },
+                'lastName': {
+                    required: true,
+                    minLength: 2,
+                    minLengthMsg: 'Last name must be at least 2 characters'
+                }
+                // Add validation for vendor image upload if needed
+            });
+
+            ValidationEngine.init('step3', {
+                'shopName': {
+                    required: true,
+                    minLength: 3,
+                    minLengthMsg: 'Shop name must be at least 3 characters'
+                },
+                'shopAddress': {
+                    required: true,
+                    minLength: 10,
+                    minLengthMsg: 'Shop address must be at least 10 characters'
+                }
+            });
+
+            ValidationEngine.init('step4', {
+                'tin': {
+                    required: true,
+                    pattern: /^[0-9]{9}$/, // Example: 9 digits for TIN
+                    patternMsg: 'Please enter a valid 9-digit TIN'
+                },
+                'tinExpireDate': {
+                    required: true,
+                    custom: (val) => {
+                        const today = new Date();
+                        const expireDate = new Date(val);
+                        return expireDate > today ? '' : 'Expiration date must be in the future';
+                    }
+                }
+                // Add validation for TIN certificate upload if needed
+            });
+        });
+    </script>
+</body>
+
+</html>

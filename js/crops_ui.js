@@ -20,7 +20,7 @@ async function handleCropsSubmit(e) {
 
     const user = firebase.auth().currentUser;
     if (!user) {
-        alert("Please log in to get crop recommendations.");
+        ValidationEngine.showNotification("Please log in to get crop recommendations.", "error");
         return;
     }
 

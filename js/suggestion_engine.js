@@ -107,15 +107,6 @@ const SuggestionEngine = {
                 reasons.push("Moisture level is ideal");
             }
 
-            // 5. EC Score (Salinity) (10% weight - bonus/penalty)
-            const ec = soilData.ec || 0;
-            if (ec > 2.5) {
-                const penalty = Math.min((ec - 2.5) * 10, 20);
-                score -= penalty;
-                if (penalty > 5) reasons.push("Salinity (EC) is too high");
-            } else if (ec > 0.8 && ec <= 2.0) {
-                reasons.push("Optimal soil salinity");
-            }
 
             return {
                 score: Math.max(0, Math.round(score)),

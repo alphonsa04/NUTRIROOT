@@ -44,6 +44,21 @@ body {
     line-height: 1.5;
 }
 
+/* Hide native browser password reveal and clear buttons */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}
+
 /* Navigation - Top Bar */
 .navbar {
     background-color: rgba(255, 255, 255, 0.8);
@@ -1633,15 +1648,22 @@ body {
 }
 
 .header-icon {
-    width: 56px;
-    height: 56px;
-    background: var(--primary-color);
-    color: white;
+    width: 60px;
+    height: 60px;
+    background: white;
+    padding: 10px;
     border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 20px rgba(26, 60, 37, 0.2);
+    box-shadow: 0 10px 25px rgba(26, 60, 37, 0.08);
+    border: 1px solid rgba(26, 60, 37, 0.05);
+}
+
+.header-icon img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
 }
 
 .section-card-title {
@@ -2154,4 +2176,37 @@ body {
         right: 2px;
         transform: none;
     }
+}
+
+/* Real-time Validation Styles */
+.validation-msg {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
+    min-height: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.validation-msg.error {
+    color: #E31A1A;
+}
+
+.validation-msg.success {
+    color: #05CD99;
+}
+
+.input-invalid {
+    border-color: #E31A1A !important;
+    box-shadow: 0 0 0 2px rgba(227, 26, 26, 0.1) !important;
+}
+
+.input-valid {
+    border-color: #05CD99 !important;
+    box-shadow: 0 0 0 2px rgba(5, 205, 153, 0.1) !important;
+}
+
+.form-group-validation {
+    margin-bottom: 1.5rem;
+    position: relative;
 }

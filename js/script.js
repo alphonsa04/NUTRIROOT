@@ -105,7 +105,7 @@ function showMessage(message, type = 'info') {
 async function saveSoilData(data) {
     try {
         // Validate data - ensure all fields have values
-        const requiredFields = ['nitrogen', 'phosphorus', 'potassium', 'ph', 'moisture', 'temperature', 'ec', 'crop'];
+        const requiredFields = ['nitrogen', 'phosphorus', 'potassium', 'ph', 'moisture', 'temperature', 'crop'];
         for (const field of requiredFields) {
             if (data[field] === undefined || data[field] === null || data[field] === '') {
                 showMessage(`Please fill the ${field} field`, 'error');
@@ -280,8 +280,7 @@ function analyzeSoilData(soilData) {
         potassium: analyzeNutrient(soilData.potassium, 'potassium'),
         ph: analyzePH(soilData.ph),
         moisture: analyzeMoisture(soilData.moisture),
-        temperature: analyzeTemperature(soilData.temperature),
-        ec: analyzeEC(soilData.ec)
+        temperature: analyzeTemperature(soilData.temperature)
     };
 
     // Generate overall status
@@ -377,18 +376,6 @@ function analyzeTemperature(temp) {
     }
 }
 
-/**
- * Analyze Electrical Conductivity (EC)
- */
-function analyzeEC(ec) {
-    if (ec < 0.8) {
-        return { status: 'low', message: 'Low salinity - good for most crops', value: ec };
-    } else if (ec >= 0.8 && ec <= 2.0) {
-        return { status: 'optimal', message: 'Ideal salinity for crop growth', value: ec };
-    } else {
-        return { status: 'high', message: 'High salinity (EC ' + ec + ') - may restrict growth', value: ec };
-    }
-}
 
 /**
  * Calculate overall soil health status
@@ -400,15 +387,14 @@ function calculateOverallStatus(analysis) {
         analysis.potassium.status,
         analysis.ph.status,
         analysis.moisture.status,
-        analysis.temperature.status,
-        analysis.ec.status
+        analysis.temperature.status
     ];
 
     const optimalCount = statuses.filter(s => s === 'optimal').length;
     const lowCount = statuses.filter(s => s === 'low').length;
     const highCount = statuses.filter(s => s === 'high').length;
 
-    if (optimalCount === 7) {
+    if (optimalCount === 6) {
         return {
             status: 'excellent',
             message: 'Your soil is in excellent condition! All parameters are within optimal ranges.'
@@ -514,16 +500,6 @@ function generateWarnings(analysis, soilData) {
         });
     }
 
-    if (analysis.ec.status === 'high') {
-        warnings.push({
-            type: 'High Salinity',
-            severity: 'high',
-            message: 'High EC detected. Excess salts can dehydrate plants. Improve irrigation to leach salts.',
-            parameter: 'EC',
-            value: soilData.ec,
-            unit: 'dS/m'
-        });
-    }
 
     return warnings;
 }
@@ -706,8 +682,7 @@ async function updateDashboardUI() {
         'potassiumValue': latestData.potassium,
         'phValue': latestData.ph,
         'moistureValue': latestData.moisture,
-        'temperatureValue': latestData.temperature,
-        'ecValue': latestData.ec
+        'temperatureValue': latestData.temperature
     };
 
     for (const [id, value] of Object.entries(elements)) {
@@ -913,7 +888,7 @@ async function updateHistoryUI() {
                 <div style="flex: 1;">Target Crop</div>
                 <div style="flex: 1.5;">Suggested Fertilizers</div>
                 <div style="min-width: 200px;">NPK Levels (mg/kg)</div>
-                <div style="min-width: 220px;">pH / Moist / Temp / EC</div>
+                <div style="min-width: 220px;">pH / Moist / Temp</div>
                 <div style="width: 36px;"></div>
             </div>
     `;
@@ -976,7 +951,6 @@ async function updateHistoryUI() {
                     <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.ph}</strong> <small>pH</small></div>
                     <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.moisture}%</strong> <small>M</small></div>
                     <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.temperature}°C</strong> <small>T</small></div>
-                    <div style="font-size: 0.8rem; color: #707EAE;"><strong style="color: var(--primary-color);">${record.ec || '0.00'}</strong> <small>EC</small></div>
                 </div>
 
                 <!--Delete Action-->

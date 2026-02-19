@@ -1,0 +1,515 @@
+/* Seller Registration Specific Styles */
+:root {
+    --vendor-bg: #F8FAFF;
+    --step-dot-active: #4B49AC;
+    --step-dot-inactive: #E0E5F2;
+}
+
+.seller-auth-body {
+    background: var(--vendor-bg);
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--primary-color);
+    -webkit-font-smoothing: initial;
+    /* Antialiasing can cause text "jump" on weight change */
+    text-rendering: auto;
+    overflow-y: scroll;
+    /* Force scrollbar to prevent layout jump when steps toggle */
+}
+
+.multi-step-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+/* Step 1: Split Layout */
+.step-split {
+    display: flex;
+    min-height: 520px;
+    height: 100%;
+}
+
+.step-split-left {
+    flex: 1;
+    background: linear-gradient(160deg, rgba(20, 60, 30, 0.60) 0%, rgba(8, 35, 15, 0.78) 100%),
+        url('../assets/images/vendor-reg-bg.jpg') center center / cover no-repeat;
+    padding: 3rem 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-bottom: 3.5rem;
+    position: relative;
+    transform: translate3d(0, 0, 0);
+}
+
+.step-split-right {
+    flex: 1.2;
+    padding: 2.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* vendor-illustration removed */
+
+/* Stabilized Logo Alignment */
+.seller-auth-body .nutriroot-logo-text {
+    font-size: 2.2rem;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    /* Center horizontally/vertically for stability */
+    justify-content: flex-start;
+    gap: 0;
+    margin-bottom: 2.5rem;
+}
+
+.seller-auth-body .logo-plant-container {
+    width: 60px;
+    height: 100px;
+    margin: 0 -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: visible;
+}
+
+.seller-auth-body .logo-plant-img {
+    height: 120px;
+    width: auto;
+    display: block;
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.seller-auth-body h1,
+.seller-auth-body h2,
+.seller-auth-body p {
+    transform: none !important;
+    backface-visibility: visible !important;
+}
+
+/* Text on the background-image left panel */
+.step-split-left h1 {
+    color: #ffffff !important;
+    font-size: 2.6rem !important;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.75rem !important;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.step-split-left p {
+    color: rgba(255, 255, 255, 0.80) !important;
+    font-size: 1rem !important;
+    line-height: 1.6;
+    margin-bottom: 0 !important;
+}
+
+.step-split-left .link-primary {
+    color: #7ee8a2 !important;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.step-split-left .logo-part {
+    color: #ffffff !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Decorative divider below logo */
+.vendor-left-divider {
+    width: 48px;
+    height: 3px;
+    background: linear-gradient(90deg, #7ee8a2, rgba(126, 232, 162, 0.2));
+    border-radius: 2px;
+    margin: 1.5rem 0;
+}
+
+/* Badge tag above heading */
+.vendor-left-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(126, 232, 162, 0.18);
+    border: 1px solid rgba(126, 232, 162, 0.35);
+    color: #a8f0c0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
+    margin-bottom: 1rem;
+}
+
+/* Common Section Styling for Steps 2-4 */
+.step-section {
+    padding: 3rem;
+}
+
+.section-box {
+    border: 1px solid #E0E5F2;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #2B3674;
+}
+
+.section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Form Controls */
+.form-grid-2 {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.reg-label {
+    display: block;
+    font-weight: 500;
+    color: #2B3674;
+    margin-bottom: 0.6rem;
+}
+
+.reg-label span {
+    color: #EE5D50;
+}
+
+.reg-input {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    border: 1px solid #E0E5F2;
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.reg-input:focus {
+    border-color: #4B49AC;
+    box-shadow: 0 0 0 4px rgba(75, 73, 172, 0.1);
+}
+
+.input-icon-wrapper {
+    position: relative;
+}
+
+/* Phone Picker Custom Styles */
+.phone-input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #E0E5F2;
+    border-radius: 12px;
+    background: #fff;
+    transition: all 0.2s ease;
+    position: relative;
+    padding: 0;
+    overflow: visible;
+}
+
+.phone-input-wrapper:focus-within {
+    border-color: #4B49AC;
+    box-shadow: 0 0 0 4px rgba(75, 73, 172, 0.1);
+}
+
+.country-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    height: 48px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #2B3674;
+    transition: background 0.2s;
+    border-radius: 12px 0 0 12px;
+}
+
+.country-trigger:hover {
+    background: #F8FAFF;
+}
+
+.country-trigger span#selectedFlag {
+    font-size: 1.25rem;
+}
+
+.country-trigger::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 4px;
+    vertical-align: middle;
+    border-top: 4px dashed;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+}
+
+.phone-divider {
+    width: 1px;
+    height: 24px;
+    background: #E0E5F2;
+}
+
+.phone-number-input {
+    flex: 1;
+    border: none !important;
+    background: transparent !important;
+    padding: 0.8rem 1rem !important;
+    font-size: 1rem;
+    color: #2B3674;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Dropdown Panel */
+.country-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 320px;
+    max-height: 350px;
+    background: #fff;
+    border: 1px solid #E0E5F2;
+    border-radius: 12px;
+    margin-top: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.country-dropdown.cp-open {
+    display: flex;
+}
+
+.country-search {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid #F4F7FE;
+    outline: none;
+    font-size: 0.95rem;
+    color: #2B3674;
+    position: sticky;
+    top: 0;
+    background: #fff;
+}
+
+.country-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.cp-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    gap: 0.8rem;
+}
+
+.cp-item:hover {
+    background: #F4F7FE;
+}
+
+.cp-flag {
+    font-size: 1.2rem;
+    width: 24px;
+}
+
+.cp-name {
+    flex: 1;
+    font-size: 0.9rem;
+    color: #4A5568;
+}
+
+.cp-dial {
+    font-size: 0.85rem;
+    color: #A3AED0;
+    font-weight: 500;
+}
+
+/* Success/Error States */
+.cp-valid {
+    border-color: #05CD99 !important;
+}
+
+.cp-invalid {
+    border-color: #EE5D50 !important;
+}
+
+.phone-error {
+    color: #EE5D50;
+    font-size: 0.75rem;
+    margin-top: 4px;
+    display: block;
+    height: 1rem;
+}
+
+/* Validation Check Mark */
+.phone-input-wrapper.cp-valid::after {
+    content: "\ead2";
+    /* Success icon font if available, or just a circle check */
+    content: "✓";
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #05CD99;
+    font-weight: 700;
+    background: rgba(5, 205, 153, 0.1);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.7rem;
+}
+
+.input-icon-end {
+    position: absolute;
+    right: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #A3AED0;
+    cursor: pointer;
+}
+
+/* Upload Box Custom Styling */
+.upload-box {
+    border: 2px dashed #E0E5F2;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #F8FAFF;
+}
+
+.upload-box:hover {
+    border-color: #4B49AC;
+    background: #F4F7FE;
+}
+
+.upload-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #2B3674;
+}
+
+.vendor-info-row {
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start;
+}
+
+.vendor-info-inputs {
+    flex: 1;
+}
+
+.vendor-info-upload {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-box-vendor {
+    width: 200px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-box-tin {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Progress indicator placeholder styling */
+.step-hidden {
+    display: none !important;
+}
+
+/* Button Group */
+.footer-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-proceed {
+    background: #000;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-back {
+    background: #FF9F1C;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-submit {
+    background: #000;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .step-split {
+        flex-direction: column;
+    }
+
+    /* .form-grid-2 is now flex-column by default */
+}

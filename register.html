@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/validation-utils.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@800&display=swap" rel="stylesheet">
     <style>
         .nutriroot-logo-text {
@@ -134,8 +135,10 @@
             </div>
 
             <!-- Login Link -->
-            <div class="auth-footer">
+            <div class="auth-footer" style="text-align: center;">
                 <p>Already have an account? <a href="index.html" class="link-primary">Login here</a></p>
+                <p style="margin-top: 0.5rem;">Are you a fertilizer shop owner? <a href="seller-register.html"
+                        class="link-primary">Register</a></p>
             </div>
         </div>
     </div>
@@ -149,22 +152,54 @@
         function handleRegister(event) {
             event.preventDefault();
 
-            // Get form values
+            // All real-time validation logic is handled by ValidationEngine
+            // The submit listener in init() will prevent submission if invalid
+
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            // Validate password match
-            if (password !== confirmPassword) {
-                if (typeof showMessage === 'function') showMessage('Passwords do not match', 'error');
-                else alert('Passwords do not match');
-                return;
-            }
 
             // Call register function from auth.js
             registerWithEmail(name, email, password);
         }
+
+        // Initialize Real-time Validation
+        document.addEventListener('DOMContentLoaded', () => {
+            ValidationEngine.init('registerForm', {
+                'name': {
+                    required: true,
+                    minLength: 3,
+                    minLengthMsg: 'Name must be at least 3 characters'
+                },
+                'email': {
+                    required: true,
+                    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    patternMsg: 'Please enter a valid email address'
+                },
+                'password': {
+                    required: true,
+                    minLength: 6,
+                    minLengthMsg: 'Password must be at least 6 characters'
+                },
+                'confirmPassword': {
+                    required: true,
+                    custom: (val) => {
+                        const pass = document.getElementById('password').value;
+                        return val === pass ? '' : 'Passwords do not match';
+                    }
+                }
+            });
+
+            // Re-validate confirm password when password changes
+            document.getElementById('password').addEventListener('input', () => {
+                const confirmField = document.getElementById('confirmPassword');
+                if (confirmField.value) {
+                    ValidationEngine.validateField(confirmField, {
+                        custom: (val) => val === document.getElementById('password').value ? '' : 'Passwords do not match'
+                    });
+                }
+            });
+        });
     </script>
 </body>
 

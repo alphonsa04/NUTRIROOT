@@ -88,5 +88,21 @@ The knowledge base for crop requirements. Publicly readable, Admin writable.
 | `message` | String | The warning text shown to user |
 | `timestamp` | Timestamp | When the alert was generated |
 | `isRead` | Boolean | Whether the user has seen it |
+| `timestamp` | Timestamp | When the alert was generated |
 
 ---
+
+## 5. **Orders Collection** (`/orders`)
+Stores details of user purchases.
+
+*   **Collection Path**: `orders`
+*   **Document ID**: `orderId` (Auto-generated UUID)
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `uid` | String | Unique ID of the ordering user |
+| `paymentId` | String | Razorpay Payment ID |
+| `items` | Array [Map] | List of purchased items (id, name, price, quantity, image) |
+| `total` | Number | Total order amount (INR) |
+| `status` | String | Order status (e.g., 'Paid', 'Shipped') |
+| `timestamp` | Timestamp | Server-generated order date |

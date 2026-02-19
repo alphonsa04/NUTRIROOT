@@ -4,7 +4,8 @@
  * Run this once via console or include temporarily in index.html to populate DB.
  */
 
-const predefinedProducts = [
+// Make predefinedProducts globally accessible for admin tools
+window.predefinedProducts = [
     // --- NITROGEN FERTILIZERS ---
     {
         id: "urea_46",
@@ -17,7 +18,8 @@ const predefinedProducts = [
         stock_quantity: 500,
         description: "High-concentration nitrogen fertilizer promoting rapid vegetative growth. Key for cereals and leafy crops.",
         image_url: "assets/images/products/urea.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "ammonium_sulphate",
@@ -30,7 +32,8 @@ const predefinedProducts = [
         stock_quantity: 200,
         description: "Provides Nitrogen and Sulfur. Ideal for alkaline soils as it helps lower pH.",
         image_url: "assets/images/products/amsul.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
 
     // --- PHOSPHATIC FERTILIZERS ---
@@ -45,7 +48,8 @@ const predefinedProducts = [
         stock_quantity: 300,
         description: "Excellent for root development and crop establishment. Contains high Phosphorus.",
         image_url: "assets/images/products/dap.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "ssp_16",
@@ -58,7 +62,8 @@ const predefinedProducts = [
         stock_quantity: 400,
         description: "Cost-effective Phosphorus source with Calcium and Sulfur. Good for oilseeds.",
         image_url: "assets/images/products/ssp.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
 
     // --- POTASSIC FERTILIZERS ---
@@ -73,7 +78,8 @@ const predefinedProducts = [
         stock_quantity: 250,
         description: "High Potassium content for disease resistance, better quality, and yield.",
         image_url: "assets/images/products/mop.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
 
     // --- COMPLEX NPK FERTILIZERS ---
@@ -88,7 +94,8 @@ const predefinedProducts = [
         stock_quantity: 150,
         description: "Balanced fertilizer for general growth maintenance and correction of all major deficiencies.",
         image_url: "assets/images/products/npk20.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "npk_10_26_26",
@@ -101,7 +108,8 @@ const predefinedProducts = [
         stock_quantity: 100,
         description: "High P and K content, suitable for fruit and vegetable crops.",
         image_url: "assets/images/products/npk102626.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "npk_12_32_16",
@@ -114,7 +122,8 @@ const predefinedProducts = [
         stock_quantity: 120,
         description: "Phosphorus-rich complex fertilizer for basal application.",
         image_url: "assets/images/products/npk123216.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "npk_17_17_17",
@@ -127,7 +136,8 @@ const predefinedProducts = [
         stock_quantity: 180,
         description: "Balanced nutrient source for sustained crop growth.",
         image_url: "assets/images/products/npk17.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "npk_19_19_19",
@@ -140,7 +150,8 @@ const predefinedProducts = [
         stock_quantity: 300,
         description: "100% Water soluble balanced fertilizer for foliar spray.",
         image_url: "assets/images/products/npk19.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
 
     // --- ORGANIC FERTILIZERS ---
@@ -155,7 +166,8 @@ const predefinedProducts = [
         stock_quantity: 1000,
         description: "Enriched organic manure to improve soil health and microbial activity.",
         image_url: "assets/images/products/vermicompost.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "neem_cake",
@@ -168,7 +180,8 @@ const predefinedProducts = [
         stock_quantity: 400,
         description: "Natural pesticide and soil conditioner. Helps reduce soil-borne pests.",
         image_url: "assets/images/products/neem_cake.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
 
     // --- SOIL CONDITIONERS ---
@@ -183,7 +196,8 @@ const predefinedProducts = [
         stock_quantity: 150,
         description: "Used to correct Zinc deficiency (leaf mottling, khaira disease).",
         image_url: "assets/images/products/zinc.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     },
     {
         id: "gypsum",
@@ -196,7 +210,8 @@ const predefinedProducts = [
         stock_quantity: 300,
         description: "Used to reclaim sodic (alkaline) soils and supply Calcium and Sulfur.",
         image_url: "assets/images/products/gypsum.png",
-        is_recommended: false
+        is_recommended: false,
+        status: 'approved'
     }
 ];
 
