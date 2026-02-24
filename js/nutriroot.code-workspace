@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "NutriRoot",
+			"path": "../../../../PlatformIO/Projects/NutriRoot"
+		}
+	],
+	"settings": {
+		"liveServer.settings.port": 5503
+	}
+}

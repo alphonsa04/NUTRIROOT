@@ -87,7 +87,7 @@
                 <!-- Password Input -->
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
-                    <div class="input-with-icon">
+                    <div class="input-with-icon input-icon-wrapper">
                         <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -96,6 +96,11 @@
                         <input type="password" id="password" class="form-input"
                             placeholder="Create a password (min 6 characters)" required minlength="6"
                             autocomplete="new-password">
+                        <svg class="input-icon-end" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" onclick="togglePasswordVisibility('password', this)">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
                     </div>
                     <small class="form-hint">Password must be at least 6 characters long</small>
                 </div>
@@ -103,7 +108,7 @@
                 <!-- Confirm Password Input -->
                 <div class="form-group">
                     <label for="confirmPassword" class="form-label">Confirm Password</label>
-                    <div class="input-with-icon">
+                    <div class="input-with-icon input-icon-wrapper">
                         <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -111,6 +116,12 @@
                         </svg>
                         <input type="password" id="confirmPassword" class="form-input"
                             placeholder="Re-enter your password" required minlength="6" autocomplete="new-password">
+                        <svg class="input-icon-end" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            onclick="togglePasswordVisibility('confirmPassword', this)">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
                     </div>
                 </div>
 

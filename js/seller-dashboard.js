@@ -13,9 +13,43 @@ const SellerDashboard = {
                     this.updateUI();
                     this.loadProducts();
                     this.loadOrders();
+
+                    // Temporary auto-approval for Jewel Treasa
+                    if (this.shopData.name === 'Jewel Treasa Raphel') {
+                        this.autoApproveJewelProducts();
+                    }
                 }
             }
         });
+    },
+
+    async autoApproveJewelProducts() {
+        console.log("NutriRoot: Running temporary auto-approval...");
+        const snapshot = await db.collection('products')
+            .where('sellerId', '==', this.currentUser.uid)
+            .get();
+
+        const batch = db.batch();
+        let count = 0;
+        snapshot.forEach(doc => {
+            if (doc.data().status !== 'approved') {
+                batch.update(doc.ref, {
+                    status: 'approved',
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            try {
+                await batch.commit();
+                console.log(`NutriRoot: Successfully approved ${count} products.`);
+                this.loadProducts();
+            } catch (error) {
+                console.error("NutriRoot: Auto-approval failed:", error);
+            }
+        }
     },
 
     updateUI() {
@@ -45,16 +79,6 @@ const SellerDashboard = {
             .get();
 
         const tableBody = document.getElementById('myProductsTableBody');
-        const tableHead = tableBody.closest('table').querySelector('thead tr');
-
-        // Add Status header if not present
-        if (!tableHead.querySelector('.status-header')) {
-            const th = document.createElement('th');
-            th.className = 'status-header';
-            th.textContent = 'Status';
-            tableHead.insertBefore(th, tableHead.children[5]);
-        }
-
         tableBody.innerHTML = '';
 
         let count = 0;
@@ -66,22 +90,22 @@ const SellerDashboard = {
                 <td>
                     <div style="display: flex; align-items: center; gap: 0.8rem;">
                         <img src="${p.image || p.image_url || 'assets/images/products/generic-fertilizer.jpg'}" class="product-img-sm">
-                        <span>${p.name}</span>
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</span>
                     </div>
                 </td>
                 <td>${p.category || 'N/A'}</td>
-                <td>${p.price}</td>
+                <td>₹${p.price}</td>
                 <td>${p.stock || 0}</td>
-                <td>${p.npk || 'N/A'}</td>
-                <td>
+                <td style="font-family: monospace;">${p.npk || '0-0-0'}</td>
+                <td style="text-align: center;">
                     <span class="status-badge ${p.status || 'pending'}">
                         ${(p.status || 'pending').toUpperCase()}
                     </span>
                 </td>
-                <td>
+                <td style="text-align: right;">
                     <div class="action-btns">
                         <button class="btn btn-outline btn-sm" onclick="SellerDashboard.openEditModal('${doc.id}')">Edit</button>
-                        <button class="btn btn-outline btn-sm danger" onclick="SellerDashboard.deleteProduct('${doc.id}')">Delete</button>
+                        <button class="btn btn-outline btn-sm danger" style="color: #EE5D50; border-color: #EE5D50;" onclick="SellerDashboard.deleteProduct('${doc.id}')">Delete</button>
                     </div>
                 </td>
             `;

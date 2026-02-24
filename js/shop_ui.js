@@ -58,6 +58,15 @@ const ShopUI = {
             // SAFETY FILTER: Only process approved items
             if (p.status !== 'approved' && p.status !== undefined) return;
 
+            // DEDUPLICATION: If this is the generic 'neem_cake' ID, skip it if a seller version exists
+            if (p.id === 'neem_cake' && products.some(other => other.name === 'Neem Cake' && other.id !== 'neem_cake')) {
+                return;
+            }
+
+            // Normalize stock field name: Prioritize 'stock' (seller data) over 'stock_quantity' (fallback)
+            const itemStock = p.stock !== undefined ? Number(p.stock) :
+                (p.stock_quantity !== undefined ? Number(p.stock_quantity) : 0);
+
             // Generate a unique key based on Name, Category, and Price
             const key = `${p.name}|${p.category}|${p.price}`.toLowerCase().replace(/\s+/g, '');
             const isThisItemRecommended = recommendedIds.has(p.id);
@@ -65,20 +74,21 @@ const ShopUI = {
                 grouped[key] = {
                     ...p,
                     image_url: p.image_url || p.image || 'assets/images/products/generic-fertilizer.jpg',
-                    originalStock: p.stock_quantity || 0,
+                    stock_quantity: itemStock,
+                    originalStock: itemStock,
                     sellerAttributionId: p.id, // Primary seller for this group
                     isGroupRecommended: isThisItemRecommended
                 };
             } else {
                 // Aggregate Stock
-                grouped[key].stock_quantity += (p.stock_quantity || 0);
+                grouped[key].stock_quantity += itemStock;
                 if (isThisItemRecommended) grouped[key].isGroupRecommended = true;
 
                 // Update representative seller if this one has more stock
-                if ((p.stock_quantity || 0) > (grouped[key].originalStock || 0)) {
+                if (itemStock > (grouped[key].originalStock || 0)) {
                     grouped[key].id = p.id;
                     grouped[key].sellerAttributionId = p.id;
-                    grouped[key].originalStock = p.stock_quantity;
+                    grouped[key].originalStock = itemStock;
                     grouped[key].image_url = p.image_url || p.image || grouped[key].image_url;
                 }
             }
@@ -288,6 +298,8 @@ const ShopUI = {
 
         container.innerHTML = '';
         cart.forEach(item => {
+            const stock = item.stock !== undefined ? Number(item.stock) :
+                (item.stock_quantity !== undefined ? Number(item.stock_quantity) : 0);
             const div = document.createElement('div');
             div.className = 'cart-item';
             div.innerHTML = `
@@ -298,7 +310,8 @@ const ShopUI = {
                     <div class="cart-controls">
                         <button class="qty-btn" onclick="ProductEngine.updateQuantity('${item.id}', -1); ShopUI.renderCartItems()">-</button>
                         <span style="font-weight: 600; font-size: 0.9rem; margin: 0 4px;">${item.quantity}</span>
-                        <button class="qty-btn" onclick="ProductEngine.updateQuantity('${item.id}', 1); ShopUI.renderCartItems()">+</button>
+                        <button class="qty-btn" 
+                            onclick="ProductEngine.updateQuantity('${item.id}', 1); ShopUI.renderCartItems()">+</button>
                     </div>
                 </div>
             `;

@@ -162,16 +162,34 @@ const ProductEngine = {
      * Cart Management
      */
     addToCart(product) {
+        // Find existing or add new
         const existing = this.cart.find(item => item.id === product.id);
+        const currentQty = existing ? existing.quantity : 0;
+
+        // STANDARD STOCK DETECTION
+        const stock = product.stock !== undefined ? Number(product.stock) :
+            (product.stock_quantity !== undefined ? Number(product.stock_quantity) : 0);
+
+        if (currentQty + 1 > stock) {
+            const msg = `Limit reached. Only ${stock} items available.`;
+            if (typeof ValidationEngine !== 'undefined') {
+                ValidationEngine.showNotification(msg, 'error');
+            } else if (typeof showMessage === 'function') {
+                showMessage(msg, 'error');
+            }
+            return;
+        }
+
         if (existing) {
             existing.quantity += 1;
         } else {
             this.cart.push({ ...product, quantity: 1 });
         }
         this.saveCart();
-        this.updateCartUI(); // Expects a global UI updater or listener
-        // Toast notification could go here
-        if (typeof showMessage === 'function') showMessage(`Added ${product.name} to cart`, 'success');
+        this.updateCartUI();
+        const successMsg = `Added ${product.name} to cart`;
+        if (typeof showMessage === 'function') showMessage(successMsg, 'success');
+        else if (typeof ValidationEngine !== 'undefined') ValidationEngine.showNotification(successMsg, 'success');
     },
 
     removeFromCart(productId) {
@@ -183,6 +201,19 @@ const ProductEngine = {
     updateQuantity(productId, delta) {
         const item = this.cart.find(item => item.id === productId);
         if (item) {
+            // Prioritize 'stock' then 'stock_quantity'
+            const stock = item.stock !== undefined ? Number(item.stock) :
+                (item.stock_quantity !== undefined ? Number(item.stock_quantity) : 0);
+
+            if (delta > 0 && item.quantity + delta > stock) {
+                const msg = `Cannot exceed available stock (${stock}).`;
+                if (typeof ValidationEngine !== 'undefined') {
+                    ValidationEngine.showNotification(msg, 'error');
+                } else if (typeof showMessage === 'function') {
+                    showMessage(msg, 'error');
+                }
+                return;
+            }
             item.quantity += delta;
             if (item.quantity <= 0) this.removeFromCart(productId);
             else this.saveCart();
@@ -206,13 +237,36 @@ const ProductEngine = {
 
     loadCart() {
         const saved = localStorage.getItem('nutriroot_cart');
-        if (saved) {
-            try {
-                this.cart = JSON.parse(saved);
-            } catch (e) {
-                console.error("Error parsing cart", e);
-                this.cart = [];
+        let parsedCart = [];
+        try {
+            parsedCart = saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Error parsing cart from localStorage:", e);
+            // Fallback to empty cart if parsing fails
+        }
+        this.cart = parsedCart;
+
+        // Final Robust Safety: Clamp all loaded items to their identified stock
+        let cartModified = false;
+        this.cart = this.cart.map(item => {
+            // Use the same stock logic as addToCart/updateQuantity
+            const stock = item.stock !== undefined ? Number(item.stock) :
+                (item.stock_quantity !== undefined ? Number(item.stock_quantity) : 0);
+
+            if (item.quantity > stock && stock > 0) {
+                console.warn(`NutriRoot: Clamping ${item.name} from ${item.quantity} to stock limit ${stock}`);
+                cartModified = true;
+                return { ...item, quantity: stock };
+            } else if (stock === 0 && item.quantity > 0) { // If stock is 0 but item is in cart
+                console.warn(`NutriRoot: Removing ${item.name} from cart as stock is 0.`);
+                cartModified = true;
+                return null; // Mark for removal
             }
+            return item;
+        }).filter(item => item !== null); // Filter out items marked for removal
+
+        if (cartModified) {
+            this.saveCart(); // Save back if clamped or items removed
         }
     },
 

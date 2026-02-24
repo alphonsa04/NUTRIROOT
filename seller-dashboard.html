@@ -186,34 +186,100 @@
         .seller-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .seller-table th {
             text-align: left;
-            padding: 1rem;
+            padding: 1.25rem 1rem;
             color: #A3AED0;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             border-bottom: 1px solid #F4F7FE;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         .seller-table td {
-            padding: 1rem;
+            padding: 1.25rem 1rem;
             border-bottom: 1px solid #F4F7FE;
             color: var(--primary-color);
             font-weight: 500;
+            vertical-align: middle;
+        }
+
+        .seller-table th:nth-child(1),
+        .seller-table td:nth-child(1) {
+            width: 30%;
+        }
+
+        .seller-table th:nth-child(2),
+        .seller-table td:nth-child(2) {
+            width: 20%;
+        }
+
+        .seller-table th:nth-child(3),
+        .seller-table td:nth-child(3) {
+            width: 10%;
+        }
+
+        .seller-table th:nth-child(4),
+        .seller-table td:nth-child(4) {
+            width: 10%;
+        }
+
+        .seller-table th:nth-child(5),
+        .seller-table td:nth-child(5) {
+            width: 10%;
+        }
+
+        .seller-table th:nth-child(6),
+        .seller-table td:nth-child(6) {
+            width: 10%;
+            text-align: center;
+        }
+
+        .seller-table th:nth-child(7),
+        .seller-table td:nth-child(7) {
+            width: 10%;
+            text-align: right;
         }
 
         .product-img-sm {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
             object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .status-badge.approved {
+            background: #E0F9F1;
+            color: #05CD99;
+        }
+
+        .status-badge.pending {
+            background: #FFF4E5;
+            color: #FF9900;
+        }
+
+        .status-badge.rejected {
+            background: #FFE5E5;
+            color: #EE5D50;
         }
 
         .action-btns {
             display: flex;
             gap: 0.5rem;
+            justify-content: flex-end;
         }
 
         .btn-sm {
@@ -401,7 +467,8 @@
                                 <th>Price</th>
                                 <th>Stock</th>
                                 <th>NPK</th>
-                                <th>Actions</th>
+                                <th style="text-align: center;">Status</th>
+                                <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="myProductsTableBody">
