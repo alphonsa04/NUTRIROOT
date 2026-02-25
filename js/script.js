@@ -1209,3 +1209,77 @@ async function updateAlertBadge() {
         badge.style.display = 'none';
     }
 }
+
+/* ========================================
+   IoT SENSOR INTEGRATION (Live Updates)
+   ======================================== */
+
+/**
+ * Initialize real-time sensor listener
+ */
+function initSensorIntegration() {
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            console.log('IoT: Starting live sensor listener for', user.uid);
+            listenForSensorUpdates(user.uid);
+        }
+    });
+}
+
+/**
+ * Listen for updates from Firestore users/{uid}/liveData/sensors
+ */
+function listenForSensorUpdates(uid) {
+    db.collection('users').doc(uid).collection('liveData').doc('sensors')
+        .onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                console.log('IoT: Received live data:', data);
+                updateSensorUI(data);
+            } else {
+                console.log('IoT: No live sensor data document found yet');
+            }
+        }, (error) => {
+            console.error('IoT: Error listening for updates:', error);
+        });
+}
+
+/**
+ * Update the circular gauges and hidden inputs with live data
+ */
+function updateSensorUI(data) {
+    const moisture = data.moisture || 0;
+    const temp = data.temperature || 0;
+
+    // Update Moisture Gauge
+    const moistureValEl = document.getElementById('gaugeMoistureValue');
+    const moistureProgressEl = document.getElementById('moistureProgress');
+    const moistureHidden = document.getElementById('modal_moisture');
+
+    if (moistureValEl) moistureValEl.innerText = moisture.toFixed(1);
+    if (moistureProgressEl) {
+        // Circumference = 2 * PI * 45 ≈ 283
+        const offset = 283 - (moisture / 100) * 283;
+        moistureProgressEl.style.strokeDashoffset = offset;
+    }
+    if (moistureHidden) moistureHidden.value = moisture;
+
+    // Update Temp Gauge
+    const tempValEl = document.getElementById('gaugeTempValue');
+    const tempProgressEl = document.getElementById('tempProgress');
+    const tempHidden = document.getElementById('modal_temperature');
+
+    if (tempValEl) tempValEl.innerText = temp.toFixed(1);
+    if (tempProgressEl) {
+        // For temp, let's normalize 0-50°C to 0-100%
+        const normalizedTemp = Math.max(0, Math.min(50, temp));
+        const offset = 283 - (normalizedTemp / 50) * 283;
+        tempProgressEl.style.strokeDashoffset = offset;
+    }
+    if (tempHidden) tempHidden.value = temp;
+}
+
+// Start sensor integration on page load if we are on dashboard
+if (window.location.pathname.includes('dashboard.html')) {
+    initSensorIntegration();
+}

@@ -49,6 +49,12 @@
                 </svg>
                 Fertilizer
             </a>
+            <a href="crops.html" class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Crops
+            </a>
             <a href="shop.html" class="nav-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="9" cy="21" r="1"></circle>
@@ -56,12 +62,6 @@
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                 </svg>
                 Shop
-            </a>
-            <a href="crops.html" class="nav-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                Crops
             </a>
             <a href="history.html" class="nav-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -143,6 +143,45 @@
                 </div>
 
                 <form id="dashboardSoilForm" onsubmit="handleDashboardSoilSubmit(event)" class="inline-form">
+                    <div class="sensor-gauges-container" style="margin-top: 0; margin-bottom: 2.5rem;">
+                        <div class="sensor-card">
+                            <div class="gauge-header">
+                                <span class="gauge-label">Moisture</span>
+                                <span class="live-pill"><span class="pulse"></span>Live</span>
+                            </div>
+                            <div class="circular-gauge" id="moistureGauge">
+                                <svg viewBox="0 0 100 100">
+                                    <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle class="gauge-progress" id="moistureProgress" cx="50" cy="50" r="45">
+                                    </circle>
+                                </svg>
+                                <div class="gauge-value">
+                                    <span id="gaugeMoistureValue">--</span>
+                                    <span class="gauge-unit">%</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="modal_moisture" value="0">
+                        </div>
+
+                        <div class="sensor-card">
+                            <div class="gauge-header">
+                                <span class="gauge-label">Temperature</span>
+                                <span class="live-pill"><span class="pulse"></span>Live</span>
+                            </div>
+                            <div class="circular-gauge" id="tempGauge">
+                                <svg viewBox="0 0 100 100">
+                                    <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle class="gauge-progress" id="tempProgress" cx="50" cy="50" r="45"></circle>
+                                </svg>
+                                <div class="gauge-value">
+                                    <span id="gaugeTempValue">--</span>
+                                    <span class="gauge-unit">°C</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="modal_temperature" value="0">
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="input-group">
                             <label for="modal_nitrogen">Nitrogen <span class="unit">(N)</span></label>
@@ -170,7 +209,7 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-row sensor-integration-row">
                         <div class="input-group">
                             <label for="modal_ph">Soil pH</label>
                             <div class="input-wrapper">
@@ -179,25 +218,6 @@
                                 <span class="input-suffix">pH</span>
                             </div>
                         </div>
-                        <div class="input-group">
-                            <label for="modal_moisture">Moisture</label>
-                            <div class="input-wrapper">
-                                <input type="number" step="0.1" id="modal_moisture" required placeholder="0.0" min="0"
-                                    max="100">
-                                <span class="input-suffix">%</span>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label for="modal_temperature">Temperature</label>
-                            <div class="input-wrapper">
-                                <input type="number" step="0.1" id="modal_temperature" required placeholder="25.0"
-                                    min="-20" max="60">
-                                <span class="input-suffix">°C</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="input-group select-group">
                             <label for="modal_crop">Target Crop</label>
                             <select id="modal_crop" required>

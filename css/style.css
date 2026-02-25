@@ -2580,3 +2580,153 @@ input::-webkit-credentials-auto-fill-button {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* ========================================
+   Sensor Gauges Integration
+   ======================================== */
+.sensor-gauges-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 2.5rem;
+    padding: 2.5rem;
+    background: #F8FAFC;
+    border-radius: 28px;
+    border: 1px solid #E2E8F0;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.sensor-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #F1F5F9;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sensor-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.gauge-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.gauge-label {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.live-pill {
+    background: #F0FDF4;
+    color: #16A34A;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #DCFCE7;
+}
+
+.pulse {
+    width: 10px;
+    height: 10px;
+    background: #22C55E;
+    border-radius: 50%;
+    display: inline-block;
+    animation: animate-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes animate-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: .5;
+        transform: scale(1.2);
+    }
+}
+
+.circular-gauge {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+.circular-gauge svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.gauge-bg {
+    fill: none;
+    stroke: #F1F5F9 !important;
+    stroke-width: 12;
+}
+
+.gauge-progress {
+    fill: none;
+    stroke: #3B82F6 !important;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#tempGauge .gauge-progress {
+    stroke: #EF4444 !important;
+}
+
+.gauge-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.gauge-value span:first-child {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0F172A;
+    line-height: 1;
+}
+
+.gauge-unit {
+    font-size: 1rem;
+    color: #64748B;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.sensor-integration-row {
+    margin-bottom: 2.5rem;
+}
+
+@media (max-width: 768px) {
+    .sensor-gauges-container {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+    }
+}

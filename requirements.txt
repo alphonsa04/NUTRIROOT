@@ -4,3 +4,5 @@ pandas
 numpy
 scikit-learn
 pyserial
+paho-mqtt
+firebase-admin
