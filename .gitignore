@@ -1,1 +1,7 @@
 assets/videos/hero-bg.mp4
+__pycache__/
+*.png
+node_modules/
+.expo/
+dist/
+build/

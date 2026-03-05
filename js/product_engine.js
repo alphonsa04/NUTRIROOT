@@ -35,7 +35,7 @@ const ProductEngine = {
                 products.push({ id: doc.id, ...doc.data() });
             });
 
-            if ((products.length < 15) && typeof seedProducts === 'function') {
+            if ((products.length < 16) && typeof seedProducts === 'function') {
                 console.log("ProductEngine: Product list incomplete or empty. Seeding/Updating database...");
                 await seedProducts();
                 // Re-fetch after seeding - ENSURE FILTER IS APPLIED
@@ -72,6 +72,7 @@ const ProductEngine = {
                 { id: "npk_20_20_20", name: "NPK 20-20-20", category: "Complex NPK Fertilizers", nitrogen_percent: 20, phosphorus_percent: 20, potassium_percent: 20, price: 220.00, stock_quantity: 150, description: "Balanced fertilizer for general growth.", image_url: "assets/images/products/npk20.png", status: 'approved' },
                 { id: "npk_10_26_26", name: "NPK 10-26-26", category: "Complex NPK Fertilizers", nitrogen_percent: 10, phosphorus_percent: 26, potassium_percent: 26, price: 1400.00, stock_quantity: 100, description: "High P and K content.", image_url: "assets/images/products/npk102626.png", status: 'approved' },
                 { id: "npk_12_32_16", name: "NPK 12-32-16", category: "Complex NPK Fertilizers", nitrogen_percent: 12, phosphorus_percent: 32, potassium_percent: 16, price: 1450.00, stock_quantity: 120, description: "Phosphorus-rich complex fertilizer.", image_url: "assets/images/products/npk123216.png", status: 'approved' },
+                { id: "npk_17_17_17", name: "NPK 17-17-17", category: "Complex NPK Fertilizers", nitrogen_percent: 17, phosphorus_percent: 17, potassium_percent: 17, price: 1300.00, stock_quantity: 180, description: "Balanced nutrient source.", image_url: "assets/images/products/npk17.png", status: 'approved' },
                 { id: "npk_19_19_19", name: "NPK 19-19-19", category: "Complex NPK Fertilizers", nitrogen_percent: 19, phosphorus_percent: 19, potassium_percent: 19, price: 180.00, stock_quantity: 300, description: "Balanced water-soluble fertilizer.", image_url: "assets/images/products/npk19.png", status: 'approved' },
 
                 // Organic
@@ -80,7 +81,9 @@ const ProductEngine = {
 
                 // Conditioners
                 { id: "zinc_sulphate", name: "Zinc Sulphate", category: "Soil Conditioners", nitrogen_percent: 0, phosphorus_percent: 0, potassium_percent: 0, price: 180.00, stock_quantity: 150, description: "Used to correct Zinc deficiency.", image_url: "assets/images/products/zinc.png", status: 'approved' },
-                { id: "gypsum", name: "Gypsum", category: "Soil Conditioners", nitrogen_percent: 0, phosphorus_percent: 0, potassium_percent: 0, price: 250.00, stock_quantity: 300, description: "Used for soil conditioning.", image_url: "assets/images/products/gypsum.png", status: 'approved' }
+                { id: "gypsum", name: "Gypsum", category: "Soil Conditioners", nitrogen_percent: 0, phosphorus_percent: 0, potassium_percent: 0, price: 250.00, stock_quantity: 300, description: "Used for soil conditioning.", image_url: "assets/images/products/gypsum.png", status: 'approved' },
+                { id: "agri_lime", name: "Agricultural Lime", category: "Soil Conditioners", nitrogen_percent: 0, phosphorus_percent: 0, potassium_percent: 0, price: 350.00, stock_quantity: 500, description: "Used to raise pH of acidic soils.", image_url: "assets/images/products/lime.png", status: 'approved' },
+                { id: "elemental_sulfur", name: "Elemental Sulfur", category: "Soil Conditioners", nitrogen_percent: 0, phosphorus_percent: 0, potassium_percent: 0, price: 450.00, stock_quantity: 200, description: "Used to lower pH of alkaline soils.", image_url: "assets/images/products/sulfur.png", status: 'approved' }
             ];
 
             this.productsCache = fallbackProducts;
@@ -99,63 +102,68 @@ const ProductEngine = {
         const needsN = soilAnalysis.nitrogen.status === 'low';
         const needsP = soilAnalysis.phosphorus.status === 'low';
         const needsK = soilAnalysis.potassium.status === 'low';
-
-        // pH Handling
-        // If pH is 'low' (acidic), we need Lime (or just generic conditioner) - Usually user said "Gypsum" for "pH correction"
-        // But Gypsum is for Sodic/Alkaline. The user said: "If pH correction needed → show Gypsum or appropriate conditioner"
-        // We'll trust the user's mapping for "pH correction" generally triggering Conditioners.
-        const needsPhCorrection = soilAnalysis.ph.status === 'low' || soilAnalysis.ph.status === 'high';
+        const needsPhLow = soilAnalysis.ph.status === 'low';
+        const needsPhHigh = soilAnalysis.ph.status === 'high';
 
         // Filter valid products based on logic
         let recommendations = allProducts.map(product => {
             let isRecommended = false;
             let matchReason = "";
+            const nameLower = product.name.toLowerCase();
 
-            // Logic 1: N Deficiency -> Show products with N > 0
-            if (needsN && product.nitrogen_percent > 0) {
+            // Logic 1: N Deficiency -> Urea or high N
+            if (needsN && (nameLower.includes('urea') || product.nitrogen_percent > 20)) {
                 isRecommended = true;
-                matchReason += "Rich in Nitrogen. ";
+                matchReason += "Rich in Nitrogen for rapid growth. ";
             }
 
-            // Logic 2: P Deficiency -> Show products with P > 0
-            if (needsP && product.phosphorus_percent > 0) {
+            // Logic 2: P Deficiency -> DAP or high P
+            if (needsP && (nameLower.includes('dap') || product.phosphorus_percent > 20)) {
                 isRecommended = true;
-                matchReason += "Rich in Phosphorus. ";
+                matchReason += "High Phosphorus for root development. ";
             }
 
-            // Logic 3: K Deficiency -> Show products with K > 0
-            if (needsK && product.potassium_percent > 0) {
+            // Logic 3: K Deficiency -> MOP or high K
+            if (needsK && (nameLower.includes('mop') || product.potassium_percent > 20)) {
                 isRecommended = true;
-                matchReason += "Rich in Potassium. ";
+                matchReason += "Potassium-rich for disease resistance. ";
             }
 
             // Logic 4: Balanced Deficiency (All 3 low) -> Show Complex NPK
             if (needsN && needsP && needsK && product.category === 'Complex NPK Fertilizers') {
                 isRecommended = true;
-                matchReason = "Balanced NPK for total nutrient recovery. "; // Override for clarity
+                matchReason = "Balanced NPK for total nutrient recovery. ";
             }
 
-            // Logic 5: pH Correction -> Show Gypsum/Conditioners
-            if (needsPhCorrection && product.category === 'Soil Conditioners') {
+            // Logic 5: pH Correction
+            if (needsPhLow && (nameLower.includes('lime') || nameLower.includes('gypsum') || product.id === 'gypsum')) {
                 isRecommended = true;
-                matchReason += "Helps in pH correction and soil conditioning. ";
+                matchReason += "Helps stabilize soil pH. ";
+            }
+            if (needsPhHigh && (nameLower.includes('sulfur') || nameLower.includes('sulphur') || nameLower.includes('gypsum') || product.id === 'gypsum')) {
+                isRecommended = true;
+                matchReason += "Helps lower soil pH. ";
             }
 
-            // Always keep object structure
-            return { ...product, is_recommended: isRecommended, match_reason: matchReason.trim() };
+            return { ...product, is_recommended: isRecommended, matchReason: matchReason.trim() };
         });
 
-        // Filter to only recommended items for the "Recommended" section
-        // But the Shop UI will likely show ALL products and just highlight recommended ones.
-        // This method usually returns specific recommendations for the "Fertilizer Recommendation" page.
-        // So we return the filtered list of recommended items only, sorted by relevance?
-        // User said: "recommended products must be labeled".
-        // The Shop UI will call fetchProducts() for the main list, and maybe this for the specific section.
-        // Let's return the full list but sorted with recommended on top? 
-        // OR just return the recommended ones for the specific "Recommendation" page usage.
+        const filtered = recommendations.filter(p => p.is_recommended);
+        console.log('ProductEngine: Recommended products:', filtered.map(p => p.name));
+        return filtered;
+    },
 
-        // For the Recommendation Page (recommendation.html), we typically just want the matches.
-        return recommendations.filter(p => p.is_recommended);
+    /**
+     * Helper to add to cart by ID (for recommendations page)
+     */
+    async handleAddToCartById(productId) {
+        const allProducts = await this.fetchProducts();
+        const product = allProducts.find(p => p.id === productId);
+        if (product) {
+            this.addToCart(product);
+        } else {
+            console.error('ProductEngine: Product not found:', productId);
+        }
     },
 
     /**

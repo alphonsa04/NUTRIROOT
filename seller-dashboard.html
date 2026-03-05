@@ -210,12 +210,12 @@
 
         .seller-table th:nth-child(1),
         .seller-table td:nth-child(1) {
-            width: 30%;
+            width: 25%;
         }
 
         .seller-table th:nth-child(2),
         .seller-table td:nth-child(2) {
-            width: 20%;
+            width: 15%;
         }
 
         .seller-table th:nth-child(3),
@@ -225,23 +225,23 @@
 
         .seller-table th:nth-child(4),
         .seller-table td:nth-child(4) {
-            width: 10%;
+            width: 8%;
         }
 
         .seller-table th:nth-child(5),
         .seller-table td:nth-child(5) {
-            width: 10%;
+            width: 12%;
         }
 
         .seller-table th:nth-child(6),
         .seller-table td:nth-child(6) {
-            width: 10%;
+            width: 15%;
             text-align: center;
         }
 
         .seller-table th:nth-child(7),
         .seller-table td:nth-child(7) {
-            width: 10%;
+            width: 15%;
             text-align: right;
         }
 
@@ -285,6 +285,34 @@
         .btn-sm {
             padding: 0.4rem 0.8rem;
             font-size: 0.85rem;
+        }
+
+        /* Premium Action Buttons */
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #E0E5F2;
+            background: white;
+            color: #A3AED0;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-action:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: #F4F7FE;
+            transform: translateY(-2px);
+        }
+
+        .btn-action.danger:hover {
+            border-color: #EE5D50;
+            color: #EE5D50;
+            background: #FFE5E5;
         }
 
         /* Modal for Add Product */

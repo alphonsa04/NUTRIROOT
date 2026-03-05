@@ -135,6 +135,45 @@
                 </div>
 
                 <form id="cropsSoilForm" class="inline-form">
+                    <div class="sensor-gauges-container" style="margin-top: 0; margin-bottom: 2.5rem;">
+                        <div class="sensor-card">
+                            <div class="gauge-header">
+                                <span class="gauge-label">Moisture</span>
+                                <span class="live-pill"><span class="pulse"></span>Live</span>
+                            </div>
+                            <div class="circular-gauge" id="moistureGauge">
+                                <svg viewBox="0 0 100 100">
+                                    <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle class="gauge-progress" id="moistureProgress" cx="50" cy="50" r="45">
+                                    </circle>
+                                </svg>
+                                <div class="gauge-value">
+                                    <span id="gaugeMoistureValue">--</span>
+                                    <span class="gauge-unit">%</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="crops_moisture" value="0">
+                        </div>
+
+                        <div class="sensor-card">
+                            <div class="gauge-header">
+                                <span class="gauge-label">Temperature</span>
+                                <span class="live-pill"><span class="pulse"></span>Live</span>
+                            </div>
+                            <div class="circular-gauge" id="tempGauge">
+                                <svg viewBox="0 0 100 100">
+                                    <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle class="gauge-progress" id="tempProgress" cx="50" cy="50" r="45"></circle>
+                                </svg>
+                                <div class="gauge-value">
+                                    <span id="gaugeTempValue">--</span>
+                                    <span class="gauge-unit">°C</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="crops_temperature" value="0">
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="input-group">
                             <label for="crops_nitrogen">Nitrogen <span class="unit">(N)</span></label>
@@ -159,26 +198,13 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="input-group">
-                            <label for="crops_ph">Soil pH</label>
+                    <div class="form-row" style="justify-content: center;">
+                        <div class="input-group" style="max-width: 400px; width: 100%;">
+                            <label for="crops_ph">Soil pH Level</label>
                             <div class="input-wrapper">
-                                <input type="number" step="0.01" id="crops_ph" required placeholder="7.00">
+                                <input type="number" step="0.01" id="crops_ph" required placeholder="7.00" min="0"
+                                    max="14">
                                 <span class="input-suffix">pH</span>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label for="crops_moisture">Moisture</label>
-                            <div class="input-wrapper">
-                                <input type="number" step="0.1" id="crops_moisture" required placeholder="0.0">
-                                <span class="input-suffix">%</span>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label for="crops_temperature">Temperature</label>
-                            <div class="input-wrapper">
-                                <input type="number" step="0.1" id="crops_temperature" required placeholder="25.0">
-                                <span class="input-suffix">°C</span>
                             </div>
                         </div>
                     </div>

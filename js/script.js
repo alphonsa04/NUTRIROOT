@@ -146,6 +146,12 @@ async function saveSoilData(data) {
             }
         }
 
+        // Specific range validation for phosphorus
+        if (data.phosphorus < 0 || data.phosphorus > 100) {
+            showMessage('Phosphorus must be between 0 and 100 mg/kg.', 'error');
+            return false; // Changed from 'return;' to 'return false;' for consistency
+        }
+
         // Add timestamp
         data.timestamp = new Date().toISOString();
 
@@ -189,7 +195,12 @@ async function getLatestSoilData() {
         // 1. Try Local Storage Cache (User-Specific)
         let cached = null;
         try {
+            // First try user-specific key
             cached = localStorage.getItem(`nutriroot_latest_soil_data_${user.uid}`);
+            // Fallback to generic key if user-specific is empty (migration/legacy support)
+            if (!cached) {
+                cached = localStorage.getItem('nutriroot_latest_soil_data');
+            }
         } catch (storageError) {
             console.warn('script.js: localStorage.getItem failed:', storageError);
         }
@@ -339,7 +350,7 @@ function analyzeSoilData(soilData) {
 function analyzeNutrient(value, nutrient) {
     const ranges = {
         nitrogen: { low: 30, optimal: [30, 70], high: 70 },
-        phosphorus: { low: 20, optimal: [20, 60], high: 60 },
+        phosphorus: { low: 20, optimal: [20, 100], high: 100 },
         potassium: { low: 25, optimal: [25, 65], high: 65 }
     };
 
@@ -758,6 +769,101 @@ async function updateDashboardUI() {
 
     // Update sparkline graphs
     await updateDashboardGraphs();
+
+    // Start local sensor polling (No Firebase)
+    startLocalSensorPolling();
+}
+
+/**
+ * Poll local Python API bridge for MQTT sensor data
+ */
+let localPollingInterval = null;
+function startLocalSensorPolling() {
+    if (localPollingInterval) return;
+
+    console.log('Starting local sensor polling (http://localhost:8000/sensors)');
+
+    const poll = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/sensors');
+            if (!response.ok) throw new Error('Bridge unreachable');
+
+            const data = await response.json();
+            console.log('Local sensor data received:', data);
+
+            // Update UI Gauges
+            updateCircularGauge('moisture', data.moisture);
+            updateCircularGauge('temp', data.temperature);
+
+            // Update Card Values
+            const mValue = document.getElementById('moistureValue');
+            if (mValue) mValue.innerText = data.moisture !== undefined ? data.moisture : '--';
+
+            const tValue = document.getElementById('temperatureValue');
+            if (tValue) tValue.innerText = data.temperature !== undefined ? data.temperature : '--';
+
+            // Sync with manual form hidden fields
+            const modalM = document.getElementById('modal_moisture') || document.getElementById('crops_moisture');
+            if (modalM) modalM.value = data.moisture || 0;
+
+            const modalT = document.getElementById('modal_temperature') || document.getElementById('crops_temperature');
+            if (modalT) modalT.value = data.temperature || 0;
+
+            // Pulse the live indicators
+            document.querySelectorAll('.live-pill .pulse').forEach(p => {
+                p.style.animation = 'none';
+                p.offsetHeight;
+                p.style.animation = 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite';
+            });
+
+        } catch (error) {
+            console.warn('Local bridge polling failed (Is mqtt_bridge.py running?):', error.message);
+        }
+    };
+
+    // Poll every 2 seconds
+    poll();
+    localPollingInterval = setInterval(poll, 2000);
+}
+
+/**
+ * Helper to update circular dashboard gauges
+ */
+function updateCircularGauge(type, value) {
+    if (value === undefined || value === null) return;
+
+    const progressId = type === 'moisture' ? 'moistureProgress' : 'tempProgress';
+    const textId = type === 'moisture' ? 'gaugeMoistureValue' : 'gaugeTempValue';
+
+    const circle = document.getElementById(progressId);
+    const text = document.getElementById(textId);
+
+    if (text) text.innerText = value;
+
+    if (circle) {
+        // SVG circle math: 2 * PI * r = 2 * 3.14159 * 45 ≈ 283
+        const radius = 45;
+        const circumference = 2 * Math.PI * radius;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+
+        let percentage = 0;
+        if (type === 'moisture') {
+            percentage = value; // 0-100%
+        } else {
+            // Temperature mapping (let's say 0-50°C is 0-100%)
+            percentage = (value / 50) * 100;
+        }
+
+        const offset = circumference - (percentage / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+
+        // Dynamic color transition
+        if (type === 'moisture') {
+            circle.style.stroke = value < 30 ? '#F44336' : (value > 70 ? '#2196F3' : '#4CAF50');
+        } else {
+            circle.style.stroke = value > 35 ? '#F44336' : (value < 15 ? '#2196F3' : '#FF9800');
+        }
+    }
 }
 
 
@@ -818,11 +924,22 @@ async function updateRecommendationPageUI() {
     `;
 
     // Add specific recommendations
-    if (analysis.recommendations.length > 0) {
+    if (result.recommendations.length > 0) {
+        let shopProducts = [];
+        if (window.ProductEngine) {
+            shopProducts = await ProductEngine.fetchProducts();
+        }
+
         html += `<h3 class="section-title">Fertilizer Recommendations</h3>`;
-        analysis.recommendations.forEach(rec => {
+        result.recommendations.forEach(rec => {
+            // Find a matching product in the shop
+            const matchingProduct = shopProducts.find(p =>
+                p.name.toLowerCase().includes(rec.fertilizer.toLowerCase()) ||
+                rec.fertilizer.toLowerCase().includes(p.name.toLowerCase())
+            );
+
             html += `
-                <div class="recommendation-card" style="border-left-color: var(--accent-green);">
+                <div class="recommendation-card" style="border-left-color: var(--accent-green); position: relative;">
                     <div class="rec-header">
                         <span class="rec-title">${rec.fertilizer}</span>
                         <span class="rec-badge">${rec.nutrient}</span>
@@ -834,6 +951,21 @@ async function updateRecommendationPageUI() {
                         Dosage: ${rec.dosage}
                     </div>
                     <p class="rec-reason">${rec.reason}</p>
+                    ${matchingProduct ? `
+                        <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #F0F2F5; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 32px; height: 32px; background: #E6F7F2; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #05CD99;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M20 6L9 17l-5-5"></path>
+                                    </svg>
+                                </div>
+                                <span style="font-size: 0.85rem; color: #05CD99; font-weight: 700;">Available in Shop</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="ProductEngine.handleAddToCartById('${matchingProduct.id}')" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 8px;">
+                                Buy Now &rarr;
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         });
@@ -850,29 +982,33 @@ async function updateRecommendationPageUI() {
     // Load Product Recommendations
     const productContainer = document.getElementById('recommendedProducts');
     if (productContainer && window.ProductEngine) {
+        console.log('RecommendationPage: Requesting product recommendations for:', result.analysis);
         const products = await ProductEngine.getRecommendations(result.analysis);
+        console.log('RecommendationPage: Found matched products:', products.length);
 
         if (products.length > 0) {
             let productHtml = `
-                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Recommended Products for You</span>
-                    <a href="shop.html" style="font-size: 0.9rem; color: var(--accent-green); text-decoration: none;">View Shop &rarr;</a>
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4rem;">
+                    <span>Top Recommended Products</span>
+                    <a href="shop.html" style="font-size: 0.9rem; color: var(--accent-green); text-decoration: none; font-weight: 600;">Browse All &rarr;</a>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
             `;
 
             products.slice(0, 3).forEach(product => {
+                const img = product.image || product.image_url || 'assets/images/products/generic-fertilizer.jpg';
                 productHtml += `
-                    <div class="product-card" style="background: white; border-radius: 16px; border: 1px solid #E0E5F2; overflow: hidden; transition: transform 0.3s ease;">
-                        <div style="height: 180px; background: #F9FAFC; display: flex; align-items: center; justify-content: center; position: relative;">
-                            <img src="${product.image}" alt="${product.name}" style="max-height: 80%; max-width: 80%; object-fit: contain;" onerror="this.src='assets/images/tree-logo.png'">
-                            ${product.matchReason ? `<span style="position: absolute; top: 10px; left: 10px; background: #E6F7F2; color: #05CD99; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${product.matchReason}</span>` : ''}
+                    <div class="product-card" style="background: white; border-radius: 20px; border: 1px solid #E0E5F2; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                        <div style="height: 200px; background: #F9FAFC; display: flex; align-items: center; justify-content: center; position: relative; padding: 1rem;">
+                            <img src="${img}" alt="${product.name}" style="max-height: 100%; max-width: 100%; object-fit: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.08));" onerror="this.src='assets/images/tree-logo.png'">
+                            ${product.matchReason ? `<span style="position: absolute; top: 12px; left: 12px; background: #E6F7F2; color: #05CD99; font-size: 0.7rem; padding: 4px 10px; border-radius: 8px; font-weight: 700; box-shadow: 0 2px 8px rgba(5,205,153,0.15);">${product.matchReason}</span>` : ''}
                         </div>
                         <div style="padding: 1.5rem;">
-                            <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--primary-color);">${product.name}</h4>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                                <span style="font-weight: 700; color: var(--accent-green); font-size: 1.1rem;">₹${product.price}</span>
-                                <button class="btn btn-sm btn-outline" onclick="ProductEngine.addToCart('${product.id}')">Add</button>
+                            <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--primary-color); font-weight: 700; line-height: 1.4;">${product.name}</h4>
+                            <p style="color: #707EAE; font-size: 0.85rem; margin-bottom: 1.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${product.description || 'Professional grade fertilizer for optimal results.'}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                                <span style="font-weight: 800; color: var(--accent-green); font-size: 1.25rem;">₹${product.price}</span>
+                                <button class="btn btn-primary btn-sm" onclick="ProductEngine.handleAddToCartById('${product.id}')" style="padding: 0.5rem 1.25rem; border-radius: 10px;">Buy Now</button>
                             </div>
                         </div>
                     </div>
@@ -881,6 +1017,13 @@ async function updateRecommendationPageUI() {
 
             productHtml += `</div>`;
             productContainer.innerHTML = productHtml;
+        } else {
+            productContainer.innerHTML = `
+                <div style="margin-top: 4rem; padding: 3rem; background: #F9FAFC; border-radius: 24px; text-align: center; border: 1px dashed #E0E5F2;">
+                    <p style="color: #707EAE;">No specific products matched your current soil profile, but you can explore our full catalog.</p>
+                    <a href="shop.html" class="btn btn-outline" style="display: inline-flex; margin-top: 1rem;">View All Products</a>
+                </div>
+            `;
         }
     }
 }
@@ -1065,6 +1208,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (document.getElementById('nitrogenValue')) {
                 await updateDashboardUI();
+            }
+            // Also start polling if gauges exist on ANY page (Dashboard or Crops)
+            if (document.getElementById('moistureProgress') || document.getElementById('tempProgress')) {
+                startLocalSensorPolling();
             }
             if (document.getElementById('recommendationsList')) {
                 await updateRecommendationPageUI();

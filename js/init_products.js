@@ -212,6 +212,34 @@ window.predefinedProducts = [
         image_url: "assets/images/products/gypsum.png",
         is_recommended: false,
         status: 'approved'
+    },
+    {
+        id: "agri_lime",
+        name: "Agricultural Lime",
+        category: "Soil Conditioners",
+        nitrogen_percent: 0,
+        phosphorus_percent: 0,
+        potassium_percent: 0,
+        price: 350.00,
+        stock_quantity: 500,
+        description: "Used to raise pH of acidic soils and provide Calcium.",
+        image_url: "assets/images/products/lime.png",
+        is_recommended: false,
+        status: 'approved'
+    },
+    {
+        id: "elemental_sulfur",
+        name: "Elemental Sulfur",
+        category: "Soil Conditioners",
+        nitrogen_percent: 0,
+        phosphorus_percent: 0,
+        potassium_percent: 0,
+        price: 450.00,
+        stock_quantity: 200,
+        description: "Used to lower pH of alkaline soils.",
+        image_url: "assets/images/products/sulfur.png",
+        is_recommended: false,
+        status: 'approved'
     }
 ];
 
