@@ -5,6 +5,11 @@
 
 const ShopUI = {
     allProducts: [],
+    
+    // EmailJS Configuration
+    EMAILJS_PUBLIC_KEY: 'aPaBJgKo-76SEDdEm',
+    EMAILJS_SERVICE_ID: 'service_r536azq',
+    EMAILJS_TEMPLATE_ID: 'template_qxvefa6',
 
     async init() {
         // Load products
@@ -18,9 +23,6 @@ const ShopUI = {
 
         // Load Order History in background
         this.renderOrderHistory();
-
-        // Listen for filter changes
-        // Already handled by inline 'onchange' attributes calling ShopUI.filterProducts()
 
         // Init price slider label
         const range = document.getElementById('priceRange');
@@ -449,69 +451,157 @@ const ShopUI = {
 
         const user = firebase.auth().currentUser;
         const total = ProductEngine.getCartTotal();
-        const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
+
+        if (!user) {
+            ValidationEngine.showNotification("Please login to checkout.", "warning");
+            return;
+        }
 
         const formHtml = `
-            <form id="checkoutDetailsForm" onsubmit="event.preventDefault(); ShopUI.processCheckout()">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Full Name</label>
-                        <input type="text" id="chkName" value="${user?.displayName || ''}" required 
-                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+            <div id="checkoutStep1">
+                <form id="checkoutDetailsForm" onsubmit="event.preventDefault(); ShopUI.sendEmailOTP()">
+                    <div style="background: #F8FAFF; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #E0E5F2;">
+                        <p style="font-size: 0.85rem; color: #707EAE; margin-bottom: 4px; font-weight: 600;">Registered Email</p>
+                        <p style="font-size: 1rem; color: var(--primary-color); font-weight: 700;">${user.email}</p>
+                        <p style="font-size: 0.75rem; color: #707EAE; margin-top: 4px;">OTP will be sent to this email for verification.</p>
                     </div>
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Phone Number</label>
-                        <input type="tel" id="chkPhone" placeholder="10-digit mobile" required pattern="[0-9]{10}"
-                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Full Name</label>
+                            <input type="text" id="chkName" value="${user?.displayName || ''}" required 
+                                style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Phone Number (+91)</label>
+                            <input type="tel" id="chkPhone" placeholder="10 digit mobile" required pattern="[0-9]{10}"
+                                style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                        </div>
                     </div>
-                </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Shipping Address</label>
-                    <textarea id="chkAddress" placeholder="Street, Apartment, etc." required 
-                        style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE; height: 80px;"></textarea>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">City</label>
-                        <input type="text" id="chkCity" required 
-                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Shipping Address</label>
+                        <textarea id="chkAddress" placeholder="Street, Apartment, etc." required 
+                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE; height: 80px;"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">State</label>
-                        <input type="text" id="chkState" required 
-                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">City</label>
+                            <input type="text" id="chkCity" required 
+                                style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">State</label>
+                            <input type="text" id="chkState" required 
+                                style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">ZIP Code</label>
+                            <input type="text" id="chkZip" required pattern="[0-9]{6}"
+                                style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">ZIP Code</label>
-                        <input type="text" id="chkZip" required pattern="[0-9]{6}"
-                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
-                    </div>
-                </div>
+                    <button type="submit" id="sendOtpBtn" class="btn btn-primary" style="width: 100%; justify-content: center; height: 56px;">
+                        Send OTP to Email
+                    </button>
+                </form>
+            </div>
+            <div id="checkoutStep2" style="display: none; text-align: center; padding: 1rem 0;">
+                <p style="color: var(--secondary-color); margin-bottom: 1.5rem;">We've sent a 6-digit code to <strong>${user.email}</strong>. Please enter it below.</p>
+                <input type="text" id="otpInput" placeholder="Enter 6-digit code" maxlength="6"
+                    style="width: 200px; padding: 15px; text-align: center; font-size: 1.25rem; font-weight: 700; border-radius: 12px; border: 2px solid var(--accent-green); margin-bottom: 1.5rem; letter-spacing: 4px;">
                 <div style="background: #F8FAFF; padding: 1.25rem; border-radius: 16px; margin-bottom: 1.5rem; border: 1px dashed var(--accent-green);">
                     <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--primary-color);">
                         <span>Total Payable</span>
                         <span>₹${total.toFixed(2)}</span>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; height: 56px;">
-                    Proceed to Payment
+                <button type="button" onclick="ShopUI.verifyEmailOTP()" id="verifyOtpBtn" class="btn btn-primary" style="width: 100%; justify-content: center; height: 56px;">
+                    Verify & Proceed to Payment
                 </button>
-            </form>
+                <a href="javascript:void(0)" onclick="ShopUI.checkout()" style="display: block; margin-top: 1rem; color: #707EAE; font-size: 0.85rem;">Edit Details</a>
+            </div>
         `;
 
-        this.openActionModal("Shipping Details", formHtml);
+        this.openActionModal("Order Email Verification", formHtml);
     },
 
-    processCheckout() {
-        const details = {
+    sendEmailOTP() {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const btn = document.getElementById('sendOtpBtn');
+        
+        // Generate random 6-digit OTP
+        this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Store details for later
+        this.pendingDetails = {
             name: document.getElementById('chkName').value,
             phone: document.getElementById('chkPhone').value,
             address: document.getElementById('chkAddress').value,
             city: document.getElementById('chkCity').value,
             state: document.getElementById('chkState').value,
-            zip: document.getElementById('chkZip').value
+            zip: document.getElementById('chkZip').value,
+            email: user.email
         };
 
+        btn.innerText = "Sending...";
+        btn.disabled = true;
+
+        // REAL EMAIL SENDING VIA EMAILJS
+        const templateParams = {
+            to_name: this.pendingDetails.name,
+            to_email: user.email,
+            passcode: this.currentOTP
+        };
+
+        emailjs.send(this.EMAILJS_SERVICE_ID, this.EMAILJS_TEMPLATE_ID, templateParams, this.EMAILJS_PUBLIC_KEY)
+            .then((response) => {
+                console.log('SUCCESS!', response.status, response.text);
+                document.getElementById('checkoutStep1').style.display = 'none';
+                document.getElementById('checkoutStep2').style.display = 'block';
+                ValidationEngine.showNotification(`OTP sent to ${user.email}!`, "success");
+                btn.innerText = "Send OTP to Email";
+                btn.disabled = false;
+            }, (error) => {
+                console.error('FAILED...', error);
+                ValidationEngine.showNotification("Verification system busy. Please use this code.", "warning");
+                
+                // Final Fallback if EmailJS fails
+                setTimeout(() => {
+                    document.getElementById('checkoutStep1').style.display = 'none';
+                    document.getElementById('checkoutStep2').style.display = 'block';
+                    ValidationEngine.showNotification(`OTP Code: ${this.currentOTP}`, "info");
+                }, 500);
+                
+                btn.innerText = "Send OTP to Email";
+                btn.disabled = false;
+            });
+    },
+
+    verifyEmailOTP() {
+        const code = document.getElementById('otpInput').value;
+        const btn = document.getElementById('verifyOtpBtn');
+        
+        if (!code || code.length !== 6) {
+            ValidationEngine.showNotification("Please enter a valid 6-digit code.", "warning");
+            return;
+        }
+
+        if (code === this.currentOTP) {
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                ValidationEngine.showNotification("Email verified successfully!", "success");
+                this.processCheckout(this.pendingDetails);
+            }, 1000);
+        } else {
+            ValidationEngine.showNotification("Invalid verification code. Please try again.", "error");
+        }
+    },
+
+    processCheckout(details) {
         const cart = ProductEngine.cart;
         const total = ProductEngine.getCartTotal();
         const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
@@ -519,7 +609,7 @@ const ShopUI = {
         if (typeof PaymentGateway !== 'undefined') {
             // Close the form modal first
             this.closeActionModal();
-
+            
             PaymentGateway.startShopPayment(total, itemCount, async (paymentId) => {
                 // Success Callback
                 ValidationEngine.showNotification(`Order Placed Successfully!`, "success");
@@ -535,7 +625,7 @@ const ShopUI = {
 
                         // Close cart modal if it was open
                         const cartModal = document.getElementById('cartModal');
-                        if (cartModal.classList.contains('active')) {
+                        if (cartModal && cartModal.classList.contains('active')) {
                             this.toggleCart();
                         }
 
