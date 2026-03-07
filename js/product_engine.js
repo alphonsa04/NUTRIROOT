@@ -169,7 +169,7 @@ const ProductEngine = {
     /**
      * Cart Management
      */
-    addToCart(product) {
+    addToCart(product, quantity = 1) {
         // Find existing or add new
         const existing = this.cart.find(item => item.id === product.id);
         const currentQty = existing ? existing.quantity : 0;
@@ -178,7 +178,7 @@ const ProductEngine = {
         const stock = product.stock !== undefined ? Number(product.stock) :
             (product.stock_quantity !== undefined ? Number(product.stock_quantity) : 0);
 
-        if (currentQty + 1 > stock) {
+        if (currentQty + quantity > stock) {
             const msg = `Limit reached. Only ${stock} items available.`;
             if (typeof ValidationEngine !== 'undefined') {
                 ValidationEngine.showNotification(msg, 'error');
@@ -189,13 +189,14 @@ const ProductEngine = {
         }
 
         if (existing) {
-            existing.quantity += 1;
+            existing.quantity += quantity;
         } else {
-            this.cart.push({ ...product, quantity: 1 });
+            this.cart.push({ ...product, quantity: quantity });
         }
         this.saveCart();
         this.updateCartUI();
-        const successMsg = `Added ${product.name} to cart`;
+
+        const successMsg = `Added ${quantity} x ${product.name} to cart`;
         if (typeof showMessage === 'function') showMessage(successMsg, 'success');
         else if (typeof ValidationEngine !== 'undefined') ValidationEngine.showNotification(successMsg, 'success');
     },
@@ -294,7 +295,7 @@ const ProductEngine = {
     /**
      * Save Order to Firestore
      */
-    async saveOrder(paymentId, cart, total) {
+    async saveOrder(paymentId, cart, total, shippingDetails = {}) {
         const user = firebase.auth().currentUser;
         if (!user) {
             console.error("saveOrder: No user logged in");
@@ -317,6 +318,7 @@ const ProductEngine = {
                     shopName: item.shopName || "NutriRoot Official"
                 })),
                 total: total,
+                shippingDetails: shippingDetails,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 status: 'Paid'
             };

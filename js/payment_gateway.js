@@ -131,7 +131,7 @@ const PaymentGateway = {
     /**
      * Start the Razorpay payment process for Shop
      */
-    startShopPayment(amount, itemCount, callback) {
+    startShopPayment(amount, itemCount, callback, details = {}) {
         const user = firebase.auth().currentUser;
         if (!user) {
             ValidationEngine.showNotification("Please log in to purchase items.", "error");
@@ -150,8 +150,9 @@ const PaymentGateway = {
                 if (callback) callback(response.razorpay_payment_id);
             },
             "prefill": {
-                "name": user.displayName || "Valued Customer",
-                "email": user.email || ""
+                "name": details.name || user.displayName || "Valued Customer",
+                "email": user.email || "",
+                "contact": details.phone || ""
             },
             "theme": {
                 "color": "#1A3C25"

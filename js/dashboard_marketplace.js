@@ -49,11 +49,23 @@ const DashboardMarketplace = {
                 <h3 class="market-name">${p.name}</h3>
                 <div class="market-price-row">
                     <span class="market-price">₹${p.price}</span>
-                    <button class="btn-market-buy" onclick="DashboardMarketplace.buyProduct('${p.id}')">Buy Now</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-market-buy" onclick="DashboardMarketplace.addToCart('${p.id}')" style="background: var(--secondary-color); font-size: 0.75rem; padding: 0.4rem 0.6rem;">Add to Cart</button>
+                        <button class="btn-market-buy" onclick="DashboardMarketplace.buyProduct('${p.id}')">Buy Now</button>
+                    </div>
                 </div>
             </div>
         `;
         return card;
+    },
+
+    async addToCart(productId) {
+        if (typeof ProductEngine !== 'undefined') {
+            await ProductEngine.handleAddToCartById(productId);
+            if (typeof ValidationEngine !== 'undefined') {
+                ValidationEngine.showNotification('Added to cart!', 'success');
+            }
+        }
     },
 
     async buyProduct(productId) {

@@ -117,6 +117,7 @@ const ShopUI = {
 
             const card = document.createElement('div');
             card.className = 'product-card';
+            card.onclick = () => ShopUI.showProductDetail(product.id || product.sellerAttributionId);
             if (isRec) card.style.border = "2px solid #05CD99"; // Highlight recommended
 
             // Safe property access with defaults
@@ -141,7 +142,7 @@ const ShopUI = {
 
                     <div class="product-actions">
                         <button class="btn btn-outline btn-cart" 
-                            onclick="ShopUI.addToCart('${product.id}')"
+                            onclick="event.stopPropagation(); ShopUI.addToCart('${product.id}')"
                             ${product.stock_quantity === 0 ? 'disabled' : ''}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -244,6 +245,91 @@ const ShopUI = {
         this.renderProducts(filtered);
     },
 
+    /**
+     * Product Detail View Logic
+     */
+    showProductDetail(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product) return;
+
+        // Populate Detail View
+        document.getElementById('detailMainImg').src = product.image_url || product.image || 'assets/images/tree-logo.png';
+        document.getElementById('detailTitle').innerText = product.name;
+        document.getElementById('detailPrice').innerText = `₹${product.price}`;
+        document.getElementById('detailDesc').innerText = product.description || 'Premium fertilizer formulated for high yields and healthy soil structure. NutriRoot ensures your crops get exactly what they need.';
+
+        // Branded Breadcrumbs
+        document.getElementById('detailBreadcrumbs').innerHTML = `
+            <a href="javascript:void(0)" onclick="ShopUI.showShop()">Shop</a>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color:#A3AED0"><path d="M9 18l6-6-6-6"></path></svg>
+            <a href="javascript:void(0)" onclick="ShopUI.showShop()">${product.category}</a>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color:#A3AED0"><path d="M9 18l6-6-6-6"></path></svg>
+            <span>${product.name}</span>
+        `;
+
+        const npkEl = document.getElementById('detailNpkVal');
+        if (product.nitrogen_percent !== undefined) {
+            npkEl.innerText = `${product.nitrogen_percent}-${product.phosphorus_percent}-${product.potassium_percent}`;
+        } else {
+            npkEl.innerText = 'Natural / Organic';
+        }
+
+        const stock = product.stock !== undefined ? Number(product.stock) : (product.stock_quantity !== undefined ? Number(product.stock_quantity) : 0);
+        const stockBadge = document.getElementById('detailStockBadge');
+        const addBtn = document.getElementById('detailAddToCartBtn');
+
+        if (stock > 0) {
+            stockBadge.innerText = 'In Stock';
+            stockBadge.style.background = 'rgba(5, 205, 153, 0.1)';
+            stockBadge.style.color = 'var(--accent-green)';
+            addBtn.disabled = false;
+        } else {
+            stockBadge.innerText = 'Out of Stock';
+            stockBadge.style.background = 'rgba(238, 93, 109, 0.1)';
+            stockBadge.style.color = '#EE5D6D';
+            addBtn.disabled = true;
+        }
+
+        document.getElementById('detailQtyInput').value = 1;
+        document.getElementById('detailAddToCartBtn').onclick = () => {
+            const qty = parseInt(document.getElementById('detailQtyInput').value);
+            this.addToCart(productId, qty);
+        };
+
+        document.getElementById('detailBuyNowBtn').onclick = () => {
+            this.confirmBuyNow(productId);
+        };
+
+        // Switch Views
+        const container = document.querySelector('.shop-container');
+        if (container) container.classList.add('shop-detail-active');
+
+        this.safeHide('productsGrid');
+        this.safeHide('shopSidebar');
+        this.safeShow('productDetailView');
+        this.safeHide('ordersView');
+
+        window.scrollTo(0, 0);
+    },
+
+    safeShow(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('view-hidden');
+    },
+
+    safeHide(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('view-hidden');
+    },
+
+    updateDetailQty(delta) {
+        const input = document.getElementById('detailQtyInput');
+        let val = parseInt(input.value) + delta;
+        if (val < 1) val = 1;
+        if (val > 10) val = 10; // Simple limit
+        input.value = val;
+    },
+
     clearFilters() {
         document.getElementById('shopSearch').value = '';
         document.getElementById('priceRange').value = 2000;
@@ -255,12 +341,47 @@ const ShopUI = {
     /**
      * Cart Interactions
      */
-    addToCart(productId) {
+    addToCart(productId, quantity = 1) {
         const product = this.allProducts.find(p => p.id === productId);
         if (product) {
-            ProductEngine.addToCart(product);
-            this.renderCartItems(); // Render if modal is open
+            ProductEngine.addToCart(product, quantity);
+            if (typeof this.renderCartItems === 'function') this.renderCartItems();
         }
+    },
+
+    confirmBuyNow(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product) return;
+
+        const qty = parseInt(document.getElementById('detailQtyInput').value);
+
+        this.openActionModal("Confirm Purchase", `
+            <div style="text-align: center; padding: 1rem;">
+                <img src="${product.image_url || product.image}" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 1rem; border-radius: 12px;">
+                <p style="margin-bottom: 1.5rem; color: var(--secondary-color);">Add <strong>${qty} x ${product.name}</strong> to your cart and proceed to checkout?</p>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-outline" style="flex: 1;" onclick="ShopUI.closeActionModal()">Cancel</button>
+                    <button class="btn btn-primary" style="flex: 1;" onclick="ShopUI.processBuyNow('${productId}', ${qty})">Add & Proceed</button>
+                </div>
+            </div>
+        `);
+    },
+
+    processBuyNow(productId, qty) {
+        this.addToCart(productId, qty);
+        this.closeActionModal();
+        // Delay slightly for visual feedback before opening cart
+        setTimeout(() => this.toggleCart(), 300);
+    },
+
+    openActionModal(title, bodyHtml) {
+        document.getElementById('actionModalTitle').innerText = title;
+        document.getElementById('actionModalBody').innerHTML = bodyHtml;
+        document.getElementById('actionOverlay').classList.add('active');
+    },
+
+    closeActionModal() {
+        document.getElementById('actionOverlay').classList.remove('active');
     },
 
     toggleCart() {
@@ -321,28 +442,102 @@ const ShopUI = {
 
     checkout() {
         const cart = ProductEngine.cart;
-        const total = ProductEngine.getCartTotal();
-        const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
-
         if (cart.length === 0) {
             ValidationEngine.showNotification("Your cart is empty!", "error");
             return;
         }
 
+        const user = firebase.auth().currentUser;
+        const total = ProductEngine.getCartTotal();
+        const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
+
+        const formHtml = `
+            <form id="checkoutDetailsForm" onsubmit="event.preventDefault(); ShopUI.processCheckout()">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Full Name</label>
+                        <input type="text" id="chkName" value="${user?.displayName || ''}" required 
+                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Phone Number</label>
+                        <input type="tel" id="chkPhone" placeholder="10-digit mobile" required pattern="[0-9]{10}"
+                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">Shipping Address</label>
+                    <textarea id="chkAddress" placeholder="Street, Apartment, etc." required 
+                        style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE; height: 80px;"></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">City</label>
+                        <input type="text" id="chkCity" required 
+                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">State</label>
+                        <input type="text" id="chkState" required 
+                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #707EAE; margin-bottom: 4px;">ZIP Code</label>
+                        <input type="text" id="chkZip" required pattern="[0-9]{6}"
+                            style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E0E5F2; background: #F4F7FE;">
+                    </div>
+                </div>
+                <div style="background: #F8FAFF; padding: 1.25rem; border-radius: 16px; margin-bottom: 1.5rem; border: 1px dashed var(--accent-green);">
+                    <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--primary-color);">
+                        <span>Total Payable</span>
+                        <span>₹${total.toFixed(2)}</span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; height: 56px;">
+                    Proceed to Payment
+                </button>
+            </form>
+        `;
+
+        this.openActionModal("Shipping Details", formHtml);
+    },
+
+    processCheckout() {
+        const details = {
+            name: document.getElementById('chkName').value,
+            phone: document.getElementById('chkPhone').value,
+            address: document.getElementById('chkAddress').value,
+            city: document.getElementById('chkCity').value,
+            state: document.getElementById('chkState').value,
+            zip: document.getElementById('chkZip').value
+        };
+
+        const cart = ProductEngine.cart;
+        const total = ProductEngine.getCartTotal();
+        const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
+
         if (typeof PaymentGateway !== 'undefined') {
+            // Close the form modal first
+            this.closeActionModal();
+
             PaymentGateway.startShopPayment(total, itemCount, async (paymentId) => {
                 // Success Callback
-                ValidationEngine.showNotification(`Order Placed Successfully! Payment ID: ${paymentId}`, "success");
+                ValidationEngine.showNotification(`Order Placed Successfully!`, "success");
 
-                // Save Order to Firestore
+                // Save Order to Firestore with Shipping Details
                 try {
-                    const saved = await ProductEngine.saveOrder(paymentId, [...cart], total);
+                    const saved = await ProductEngine.saveOrder(paymentId, [...cart], total, details);
 
                     if (saved) {
                         // Clear cart
                         ProductEngine.clearCart();
                         this.renderCartItems();
-                        this.toggleCart();
+
+                        // Close cart modal if it was open
+                        const cartModal = document.getElementById('cartModal');
+                        if (cartModal.classList.contains('active')) {
+                            this.toggleCart();
+                        }
 
                         // Show Orders View
                         this.showOrders();
@@ -351,9 +546,8 @@ const ShopUI = {
                     console.error("Checkout save failed:", saveError);
                     ValidationEngine.showNotification("Order placed but could not be saved to history.", "error");
                 }
-            });
+            }, details);
         } else {
-            console.error("PaymentGateway not loaded");
             ValidationEngine.showNotification("Payment system unavailable.", "error");
         }
     },
@@ -535,17 +729,29 @@ const ShopUI = {
      * View Toggles
      */
     showShop() {
-        document.getElementById('shopMainView').classList.remove('view-hidden');
-        document.getElementById('ordersView').classList.add('view-hidden');
+        const container = document.querySelector('.shop-container');
+        if (container) container.classList.remove('shop-detail-active');
+
+        this.safeShow('shopMainView');
+        this.safeShow('productsGrid');
+        this.safeShow('shopSidebar');
+        this.safeHide('productDetailView');
+        this.safeHide('ordersView');
         document.getElementById('btnBrowse').classList.add('active');
         document.getElementById('btnOrders').classList.remove('active');
     },
 
     showOrders() {
-        document.getElementById('shopMainView').classList.add('view-hidden');
-        document.getElementById('ordersView').classList.remove('view-hidden');
-        document.getElementById('ordersListView').classList.remove('view-hidden');
-        document.getElementById('orderDetailsView').classList.add('view-hidden');
+        const container = document.querySelector('.shop-container');
+        if (container) container.classList.remove('shop-detail-active');
+
+        this.safeShow('shopMainView');
+        this.safeHide('productsGrid');
+        this.safeHide('shopSidebar');
+        this.safeHide('productDetailView');
+        this.safeShow('ordersView');
+        this.safeShow('ordersListView');
+        this.safeHide('orderDetailsView');
         document.getElementById('btnBrowse').classList.remove('active');
         document.getElementById('btnOrders').classList.add('active');
         this.renderOrderHistory();
