@@ -163,6 +163,7 @@ async function saveSoilData(data) {
         }
 
         data.userId = user.uid;
+        data.userName = user.displayName || 'Farmer';
 
         // 1. Save to Firestore (Persistent History)
         await db.collection('soilData').doc(user.uid).collection('readings').add(data);
