@@ -1,5 +1,5 @@
 assets/videos/hero-bg.mp4
-__pycache__/
+assets/videos/hero-bg.mp4
 *.png
 node_modules/
 .expo/
