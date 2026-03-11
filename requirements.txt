@@ -6,3 +6,7 @@ scikit-learn
 pyserial
 paho-mqtt
 firebase-admin
+gunicorn
+python-dotenv
+jinja2
+python-multipart

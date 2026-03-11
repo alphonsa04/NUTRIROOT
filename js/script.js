@@ -786,7 +786,7 @@ function startLocalSensorPolling() {
 
     const poll = async () => {
         try {
-            const response = await fetch('http://localhost:8000/sensors');
+            const response = await fetch('/sensors');
             if (!response.ok) throw new Error('Bridge unreachable');
 
             const data = await response.json();
