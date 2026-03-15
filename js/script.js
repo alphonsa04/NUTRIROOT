@@ -1431,3 +1431,52 @@ function updateSensorUI(data) {
 if (window.location.pathname.includes('dashboard.html')) {
     initSensorIntegration();
 }
+
+/**
+ * Toggle mobile navigation for internal pages (dashboard, shop, etc.)
+ */
+function toggleMobileNav() {
+    const navLinks = document.querySelector('.nav-links') || document.querySelector('.nav-menu');
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+
+    if (navLinks) {
+        navLinks.classList.toggle('active');
+        if (mobileToggle) mobileToggle.classList.toggle('active');
+    }
+}
+
+// Alias for landing page compatibility
+window.toggleMobileMenu = toggleMobileNav;
+// Export functions to window if needed
+window.toggleMobileNav = toggleMobileNav;
+
+/**
+ * Handle closing mobile menu on link click
+ */
+document.addEventListener('click', (e) => {
+    const navLinks = document.querySelector('.nav-links');
+    const mobileToggle = document.querySelector('.mobile-menu-toggle');
+
+    // Close if clicking outside nav links but on a toggle or link
+    if (navLinks && navLinks.classList.contains('active')) {
+        if (!navLinks.contains(e.target) && !mobileToggle.contains(e.target)) {
+            navLinks.classList.remove('active');
+            mobileToggle.classList.remove('active');
+        }
+    }
+});
+
+// Close mobile menu when clicking internal nav links
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        const navLinks = document.querySelector('.nav-links');
+        const mobileToggle = document.querySelector('.mobile-menu-toggle');
+        if (navLinks && navLinks.classList.contains('active')) {
+            navLinks.classList.remove('active');
+            mobileToggle.classList.remove('active');
+        }
+    });
+});
+
+// Export functions to window if needed
+window.toggleMobileNav = toggleMobileNav;

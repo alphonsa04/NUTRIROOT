@@ -5,7 +5,7 @@
 
 const ShopUI = {
     allProducts: [],
-    
+
     // EmailJS Configuration
     EMAILJS_PUBLIC_KEY: 'aPaBJgKo-76SEDdEm',
     EMAILJS_SERVICE_ID: 'service_r536azq',
@@ -24,13 +24,14 @@ const ShopUI = {
         // Load Order History in background
         this.renderOrderHistory();
 
-        // Init price slider label
-        const range = document.getElementById('priceRange');
-        if (range) {
-            range.addEventListener('input', (e) => {
-                document.getElementById('priceValue').innerText = `₹${e.target.value}`;
-            });
-        }
+        // Init category counts
+        this.updateCategoryCounts();
+
+        // Init dual range slider
+        this.handlePriceSlider();
+
+        // Render Recommendations
+        this.renderRecommendations();
     },
 
     async renderProducts(products) {
@@ -219,7 +220,10 @@ const ShopUI = {
      */
     filterProducts() {
         const searchText = document.getElementById('shopSearch').value.toLowerCase();
-        const maxPrice = parseInt(document.getElementById('priceRange').value);
+
+        // Dual Slider Prices
+        const minPrice = parseInt(document.getElementById('priceMin').value);
+        const maxPrice = parseInt(document.getElementById('priceMax').value);
 
         // Get checked categories
         const checkedCategories = Array.from(document.querySelectorAll('.filter-option input:checked'))
@@ -229,14 +233,10 @@ const ShopUI = {
             const matchesSearch = product.name.toLowerCase().includes(searchText) ||
                 product.description.toLowerCase().includes(searchText);
 
-            const matchesPrice = product.price <= maxPrice;
+            const matchesPrice = product.price >= minPrice && product.price <= maxPrice;
 
-            // Category match logic (OR logic within categories)
-            // If no category selected, show all
             let matchesCategory = true;
             if (checkedCategories.length > 0) {
-                // Check if product category matches any checked box
-                // Or if product tags overlap with checked categories
                 const productTags = [product.category.toLowerCase(), ...(product.tags || [])];
                 matchesCategory = checkedCategories.some(cat => productTags.includes(cat));
             }
@@ -245,6 +245,182 @@ const ShopUI = {
         });
 
         this.renderProducts(filtered);
+        this.renderFilterChips();
+    },
+
+    /**
+     * Handle Dual Price Slider Interaction
+     */
+    handlePriceSlider() {
+        const sliderMin = document.getElementById('priceMin');
+        const sliderMax = document.getElementById('priceMax');
+        const minLabel = document.getElementById('minPriceLabel');
+        const maxLabel = document.getElementById('maxPriceLabel');
+        const track = document.querySelector('.slider-track');
+
+        if (!sliderMin || !sliderMax) return;
+
+        let minVal = parseInt(sliderMin.value);
+        let maxVal = parseInt(sliderMax.value);
+
+        // Ensure handles don't cross
+        if (maxVal - minVal < 200) {
+            if (event?.target === sliderMin) {
+                sliderMin.value = maxVal - 200;
+                minVal = maxVal - 200;
+            } else {
+                sliderMax.value = minVal + 200;
+                maxVal = minVal + 200;
+            }
+        }
+
+        minLabel.innerText = `₹${minVal}`;
+        maxLabel.innerText = `₹${maxVal}${maxVal >= 2500 ? '+' : ''}`;
+
+        // Update track position
+        const percentMin = (minVal / sliderMin.max) * 100;
+        const percentMax = (maxVal / sliderMax.max) * 100;
+
+        if (track) {
+            track.style.left = percentMin + '%';
+            track.style.width = (percentMax - percentMin) + '%';
+        }
+
+        // Debounced or live dynamic update
+        this.filterProducts();
+    },
+
+    /**
+     * Render Active Filter Chips
+     */
+    renderFilterChips() {
+        const chipContainer = document.getElementById('activeFilters');
+        if (!chipContainer) return;
+        chipContainer.innerHTML = '';
+
+        const checkedCategories = Array.from(document.querySelectorAll('.filter-option input:checked'));
+        const minPrice = parseInt(document.getElementById('priceMin').value);
+        const maxPrice = parseInt(document.getElementById('priceMax').value);
+
+        // Category Chips
+        checkedCategories.forEach(cb => {
+            const chip = this.createChip(cb.value, () => {
+                cb.checked = false;
+                this.filterProducts();
+            });
+            chipContainer.appendChild(chip);
+        });
+
+        // Price Chip (only if not default)
+        if (minPrice > 0 || maxPrice < 2500) {
+            const label = `₹${minPrice} - ₹${maxPrice}`;
+            const chip = this.createChip(label, () => {
+                document.getElementById('priceMin').value = 0;
+                document.getElementById('priceMax').value = 2500;
+                this.handlePriceSlider();
+            });
+            chipContainer.appendChild(chip);
+        }
+    },
+
+    createChip(text, onRemove) {
+        const div = document.createElement('div');
+        div.className = 'filter-chip';
+        div.innerHTML = `
+            <span>${text}</span>
+            <span class="chip-remove">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+        `;
+        div.querySelector('.chip-remove').onclick = onRemove;
+        return div;
+    },
+
+    /**
+     * Calculate and update category counts
+     */
+    updateCategoryCounts() {
+        const counts = {};
+        this.allProducts.forEach(p => {
+            counts[p.category] = (counts[p.category] || 0) + 1;
+        });
+
+        document.querySelectorAll('.category-count').forEach(span => {
+            const cat = span.getAttribute('data-category');
+            span.innerText = `(${counts[cat] || 0})`;
+        });
+    },
+
+    /**
+     * Mobile Menu Toggle
+     */
+    toggleMobileFilters() {
+        const sidebar = document.getElementById('shopSidebar');
+        if (sidebar) sidebar.classList.toggle('active');
+        document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+    },
+
+    /**
+     * Render Soil-Based Recommendations
+     */
+    async renderRecommendations() {
+        const section = document.getElementById('recommendedSection');
+        const container = document.getElementById('recommendedContainer');
+        if (!section || !container) return;
+
+        const soilData = JSON.parse(localStorage.getItem('nutriroot_latest_soil_data'));
+        if (!soilData) {
+            section.style.display = 'none';
+            return;
+        }
+
+        const recommendations = await ProductEngine.getRecommendations(soilData);
+        if (recommendations.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        container.innerHTML = recommendations.map(product => `
+            <div class="recommended-item-card">
+                <div class="recommended-img-wrapper">
+                    <span class="recommended-badge">Recommended</span>
+                    <img src="${product.image_url || 'assets/images/products/generic-fertilizer.jpg'}" alt="${product.name}">
+                </div>
+                <div class="recommended-info">
+                    <div>
+                        <p class="rec-category">${product.category}</p>
+                        <h3 class="rec-title">${product.name}</h3>
+                    </div>
+                    <div class="rec-actions">
+                        <div>
+                            <p class="rec-price">₹${product.price}</p>
+                            <div class="rec-rating">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                                </svg>
+                                <span>4.${Math.floor(Math.random() * 5) + 5}</span>
+                            </div>
+                        </div>
+                        <button class="btn-add-rec" onclick="ShopUI.handleAddToCartRec('${product.id}')" title="Add to Cart">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M12 5v14M5 12h14"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    handleAddToCartRec(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (product) {
+            ProductEngine.addToCart(product);
+        }
     },
 
     /**
@@ -334,10 +510,15 @@ const ShopUI = {
 
     clearFilters() {
         document.getElementById('shopSearch').value = '';
-        document.getElementById('priceRange').value = 2000;
-        document.getElementById('priceValue').innerText = '₹2000';
+        const minS = document.getElementById('priceMin');
+        const maxS = document.getElementById('priceMax');
+        if (minS && maxS) {
+            minS.value = 0;
+            maxS.value = 2500;
+            this.handlePriceSlider();
+        }
         document.querySelectorAll('.filter-option input').forEach(cb => cb.checked = false);
-        this.renderProducts(this.allProducts);
+        this.filterProducts();
     },
 
     /**
@@ -530,10 +711,10 @@ const ShopUI = {
         if (!user) return;
 
         const btn = document.getElementById('sendOtpBtn');
-        
+
         // Generate random 6-digit OTP
         this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         // Store details for later
         this.pendingDetails = {
             name: document.getElementById('chkName').value,
@@ -566,14 +747,14 @@ const ShopUI = {
             }, (error) => {
                 console.error('FAILED...', error);
                 ValidationEngine.showNotification("Verification system busy. Please use this code.", "warning");
-                
+
                 // Final Fallback if EmailJS fails
                 setTimeout(() => {
                     document.getElementById('checkoutStep1').style.display = 'none';
                     document.getElementById('checkoutStep2').style.display = 'block';
                     ValidationEngine.showNotification(`OTP Code: ${this.currentOTP}`, "info");
                 }, 500);
-                
+
                 btn.innerText = "Send OTP to Email";
                 btn.disabled = false;
             });
@@ -582,7 +763,7 @@ const ShopUI = {
     verifyEmailOTP() {
         const code = document.getElementById('otpInput').value;
         const btn = document.getElementById('verifyOtpBtn');
-        
+
         if (!code || code.length !== 6) {
             ValidationEngine.showNotification("Please enter a valid 6-digit code.", "warning");
             return;
@@ -591,7 +772,7 @@ const ShopUI = {
         if (code === this.currentOTP) {
             btn.innerText = "Verifying...";
             btn.disabled = true;
-            
+
             setTimeout(() => {
                 ValidationEngine.showNotification("Email verified successfully!", "success");
                 this.processCheckout(this.pendingDetails);
@@ -609,7 +790,7 @@ const ShopUI = {
         if (typeof PaymentGateway !== 'undefined') {
             // Close the form modal first
             this.closeActionModal();
-            
+
             PaymentGateway.startShopPayment(total, itemCount, async (paymentId) => {
                 // Success Callback
                 ValidationEngine.showNotification(`Order Placed Successfully!`, "success");
