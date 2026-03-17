@@ -27,8 +27,8 @@
 
 .marketplace-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.2rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
 }
 
 .market-card {
@@ -38,9 +38,9 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid #F0F2F5;
     position: relative;
-    aspect-ratio: 1 / 1;
     display: flex;
     flex-direction: column;
+    min-height: 380px;
 }
 
 .market-card:hover {
@@ -49,10 +49,11 @@
 }
 
 .market-img-container {
-    height: 45%;
+    height: 180px;
     position: relative;
     overflow: hidden;
     flex-shrink: 0;
+    background: #f9f9f9;
 }
 
 .market-img {
@@ -99,9 +100,9 @@
 }
 
 .market-name {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.6rem;
     color: var(--primary-color);
     display: -webkit-box;
     -webkit-line-clamp: 2;

@@ -98,7 +98,7 @@ const DashboardMarketplace = {
                     sellerId: p.sellerId,
                     sellerName: p.sellerName,
                     shopName: p.shopName,
-                    image: p.image || p.image_url || ""
+                    image: p.image || p.image_url || p.imageSrc || ""
                 }];
 
                 // Use ProductEngine if available to save order

@@ -604,10 +604,14 @@ const ShopUI = {
         cart.forEach(item => {
             const stock = item.stock !== undefined ? Number(item.stock) :
                 (item.stock_quantity !== undefined ? Number(item.stock_quantity) : 0);
+
+            // Normalize image source
+            const itemImg = item.image_url || item.image || item.imageSrc || 'assets/images/tree-logo.png';
+
             const div = document.createElement('div');
             div.className = 'cart-item';
             div.innerHTML = `
-                <img src="${item.image}" class="cart-item-img" onerror="this.src='assets/images/tree-logo.png'">
+                <img src="${itemImg}" class="cart-item-img" onerror="this.src='assets/images/tree-logo.png'">
                 <div class="cart-item-details">
                     <div class="cart-item-title">${item.name}</div>
                     <div class="cart-item-price">₹${item.price}</div>

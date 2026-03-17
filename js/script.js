@@ -152,8 +152,8 @@ async function saveSoilData(data) {
             return false; // Changed from 'return;' to 'return false;' for consistency
         }
 
-        // Add timestamp
-        data.timestamp = new Date().toISOString();
+        // Add timestamp - use numeric (ms) for reliable comparisons
+        data.timestamp = Date.now();
 
         // Get current user from Firebase Auth
         const user = auth.currentUser;
@@ -419,7 +419,7 @@ function analyzeTemperature(temp) {
 
 
 /**
- * Calculate overall soil health status
+ * Calculate overall soil health status and numeric score
  */
 function calculateOverallStatus(analysis) {
     const statuses = [
@@ -435,27 +435,36 @@ function calculateOverallStatus(analysis) {
     const lowCount = statuses.filter(s => s === 'low').length;
     const highCount = statuses.filter(s => s === 'high').length;
 
-    if (optimalCount === 6) {
-        return {
-            status: 'excellent',
-            message: 'Your soil is in excellent condition! All parameters are within optimal ranges.'
-        };
-    } else if (optimalCount >= 4) {
-        return {
-            status: 'good',
-            message: 'Your soil is in good condition with minor adjustments needed.'
-        };
-    } else if (optimalCount >= 2) {
-        return {
-            status: 'fair',
-            message: 'Your soil needs attention. Several parameters are outside optimal ranges.'
-        };
+    // Calculate numeric score (0-100)
+    // Each optimal parameter gives ~16.7 points
+    const healthScore = Math.round((optimalCount / 6) * 100);
+
+    let result = {
+        score: healthScore,
+        status: '',
+        message: '',
+        actions: []
+    };
+
+    if (healthScore >= 90) {
+        result.status = 'excellent';
+        result.message = 'Your soil is in excellent condition! All parameters are within optimal ranges.';
+        result.actions = ['Maintain current management practices.', 'Monitor regularly to sustain high productivity.'];
+    } else if (healthScore >= 70) {
+        result.status = 'good';
+        result.message = 'Your soil is in good condition with minor adjustments needed.';
+        result.actions = ['Address minor nutrient imbalances.', 'Ensure consistent irrigation scheduling.'];
+    } else if (healthScore >= 40) {
+        result.status = 'fair';
+        result.message = 'Your soil needs attention. Several parameters are outside optimal ranges.';
+        result.actions = ['Apply specific fertilizers as recommended below.', 'Check soil pH levels and amend if necessary.', 'Improve drainage or irrigation based on moisture data.'];
     } else {
-        return {
-            status: 'poor',
-            message: 'Immediate action required! Multiple soil parameters need correction.'
-        };
+        result.status = 'poor';
+        result.message = 'Immediate action required! Multiple soil parameters need correction.';
+        result.actions = ['Complete nutrient restoration is recommended.', 'Urgent pH correction may be required.', 'Consult with an agronomist for a detailed recovery plan.'];
     }
+
+    return result;
 }
 
 /**
@@ -556,46 +565,51 @@ function generateRecommendations(analysis, soilData) {
     if (ph.status === 'low') {
         recommendations.push({
             fertilizer: 'Agricultural Lime',
-            nutrient: 'pH Balancer',
+            nutrient: 'PH Balancer',
             dosage: '2-4 tons/ha',
-            reason: 'Soil is acidic (pH ' + ph.value + '). Lime is essential to raise pH and unlock nutrient availability.'
+            reason: `Your soil pH of ${ph.value} is acidic. Agricultural Lime is essential to raise the pH level, which unlocks the availability of key nutrients like Nitrogen and Phosphorus that are otherwise trapped in the soil.`,
+            ai_insight: `Raising pH to the optimal 6.5-7.0 range can increase your fertilizer efficiency by up to 50%.`
         });
     } else if (ph.status === 'high') {
         recommendations.push({
             fertilizer: 'Elemental Sulfur',
-            nutrient: 'pH Balancer',
+            nutrient: 'PH Balancer',
             dosage: '500-1000 kg/ha',
-            reason: 'Soil is alkaline (pH ' + ph.value + '). Sulfur helps lower pH to a range suitable for ' + soilData.crop + '.'
+            reason: `Your soil pH of ${ph.value} is alkaline. Elemental Sulfur helps lower the pH, making micronutrients more available to your ${soilData.crop} crops.`,
+            ai_insight: `Lowering pH prevents nutrient lockout and leaf yellowing commonly seen in alkaline soils.`
         });
     }
 
     // Nitrogen recommendations
     if (nitrogen.status === 'low') {
         recommendations.push({
-            fertilizer: 'Urea (46% N)',
+            fertilizer: 'Urea',
             nutrient: 'Nitrogen',
             dosage: '100-150 kg/ha',
-            reason: 'To correct significant nitrogen deficiency and support rapid vegetative growth in ' + soilData.crop + '.'
+            reason: `Nitrogen level is low (${nitrogen.value} mg/kg). Urea provides a concentrated source of Nitrogen (46%) which is vital for the rapid vegetative growth and leaf greening of your ${soilData.crop}.`,
+            ai_insight: `Early Nitrogen application is critical for maximum yield potential in the initial growth stages.`
         });
     }
 
     // Phosphorus recommendations
     if (phosphorus.status === 'low') {
         recommendations.push({
-            fertilizer: 'DAP (18-46-0)',
+            fertilizer: 'DAP',
             nutrient: 'Phosphorus',
             dosage: '75-125 kg/ha',
-            reason: 'High phosphorus content in DAP will stimulate root development and early plant vigor.'
+            reason: `Phosphorus level is low (${phosphorus.value} mg/kg). DAP (Diammonium Phosphate) stimulates vigorous root development and ensures healthy plant establishment.`,
+            ai_insight: `Phosphorus is the "energy currency" of the plant; fixing this now prevents stunted growth later.`
         });
     }
 
     // Potassium recommendations
     if (potassium.status === 'low') {
         recommendations.push({
-            fertilizer: 'MOP (0-0-60)',
+            fertilizer: 'MOP',
             nutrient: 'Potassium',
             dosage: '50-100 kg/ha',
-            reason: 'Potassium is vital for water regulation and disease resistance, especially in ' + soilData.crop + '.'
+            reason: `Potassium level is low (${potassium.value} mg/kg). MOP (Muriate of Potash) improves water regulation, disease resistance, and product quality of your ${soilData.crop}.`,
+            ai_insight: `Potassium strengthens cell walls, making your crops more resilient to drought and pests.`
         });
     }
 
@@ -889,87 +903,210 @@ async function updateRecommendationPageUI() {
     }
 
     const result = analyzeSoilData(latestData);
+    const scoreClass = `score-${result.overallStatus.status}`;
 
     let html = `
-        <!-- Professional Soil Health Overview -->
-        <div class="info-section glass-card" style="margin-bottom: 3rem; background: linear-gradient(135deg, #ffffff 0%, #F9FAFC 100%); border-radius: 24px; padding: 2.5rem; box-shadow: 0 12px 40px rgba(0,0,0,0.06); border: 1px solid #E0E5F2; position: relative; overflow: hidden;">
-            <!-- Decorative accent -->
-            <div style="position: absolute; top: 0; right: 0; width: 150px; height: 150px; background: radial-gradient(circle, rgba(5, 205, 153, 0.05) 0%, transparent 70%); border-radius: 0 0 0 100px;"></div>
+        <!-- Enhanced Soil Health Score Section -->
+        <div class="info-section glass-card" style="margin-bottom: 3rem; background: white; border-radius: 24px; padding: 2.5rem; box-shadow: 0 12px 40px rgba(0,0,0,0.06); border: 1px solid #E0E5F2; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: radial-gradient(circle, rgba(5, 205, 153, 0.03) 0%, transparent 70%); border-radius: 0 0 0 100px;"></div>
             
-            <div style="position: relative; z-index: 1;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.75rem;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+            <div style="display: flex; gap: 3rem; align-items: center; flex-wrap: wrap; position: relative; z-index: 1;">
+                <!-- Circular Gauge -->
+                <div class="soil-score-gauge ${scoreClass}" style="flex-shrink: 0;">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="gauge-progress" cx="50" cy="50" r="45" style="stroke-dasharray: 283; stroke-dashoffset: ${283 - (result.overallStatus.score / 100 * 283)};"></circle>
                     </svg>
-                    <h3 class="info-title" style="color: var(--primary-color); font-weight: 700; font-size: 1.4rem; margin: 0;">Soil Health Analysis</h3>
-                </div>
-                
-                <div style="display: flex; align-items: flex-start; gap: 1.75rem; flex-wrap: wrap;">
-                    <div style="width: 88px; height: 88px; background: linear-gradient(135deg, ${result.overallStatus.status === 'excellent' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'good' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'fair' ? 'rgba(255, 153, 72, 0.1)' : 'rgba(227, 26, 26, 0.1)'}; border-radius: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
-                        <div style="width: 24px; height: 24px; border-radius: 50%; background: ${result.overallStatus.status === 'excellent' ? '#05CD99' : result.overallStatus.status === 'good' ? '#4ade80' : result.overallStatus.status === 'fair' ? '#FFAC33' : '#E31A1A'}; box-shadow: 0 0 15px ${result.overallStatus.status === 'excellent' ? '#05CD99' : result.overallStatus.status === 'good' ? '#4ade80' : result.overallStatus.status === 'fair' ? '#FFAC33' : '#E31A1A'}66;"></div>
+                    <div class="gauge-content">
+                        <span class="score-value">${result.overallStatus.score}</span>
+                        <span class="score-label">HEALTH</span>
                     </div>
-                    <div style="flex: 1; min-width: 250px;">
-                        <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: ${result.overallStatus.status === 'excellent' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'good' ? 'rgba(5, 205, 153, 0.1)' : result.overallStatus.status === 'fair' ? 'rgba(255, 153, 72, 0.1)' : 'rgba(227, 26, 26, 0.1)'}; border-radius: 8px; margin-bottom: 1rem;">
-                            <span style="font-size: 0.85rem; font-weight: 600; color: ${result.overallStatus.status === 'excellent' ? 'var(--accent-green)' : result.overallStatus.status === 'good' ? 'var(--accent-green)' : result.overallStatus.status === 'fair' ? 'var(--accent-orange)' : 'var(--accent-red)'}; text-transform: uppercase; letter-spacing: 0.5px;">${result.overallStatus.status} Condition</span>
-                        </div>
-                        <h4 style="color: var(--primary-color); font-size: 1.4rem; font-weight: 700; margin: 0 0 0.75rem 0; line-height: 1.3;">
-                            ${result.overallStatus.status === 'excellent' ? 'Optimal Soil Health' : result.overallStatus.status === 'good' ? 'Good Soil Condition' : result.overallStatus.status === 'fair' ? 'Moderate Soil Health' : 'Soil Improvement Needed'}
+                </div>
+
+                <div style="flex: 1; min-width: 300px;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--card-bg); border-radius: 12px; margin-bottom: 1.25rem; border: 1px solid #E0E5F2;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green);"></div>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 1px;">Overall Condition: ${result.overallStatus.status}</span>
+                    </div>
+
+                    <h2 style="font-size: 2rem; font-weight: 800; color: var(--primary-color); margin: 0 0 1rem 0; line-height: 1.2;">
+                        ${result.overallStatus.status === 'excellent' ? 'Exceptional Land Fertility' : result.overallStatus.status === 'good' ? 'Productive Soil Resources' : result.overallStatus.status === 'fair' ? 'Marginal Soil Health' : 'Critical Soil Restoration Required'}
+                    </h2>
+                    
+                    <p style="color: #707EAE; font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+                        ${result.overallStatus.message}
+                    </p>
+
+                    <div style="background: #F8FAFC; border-radius: 16px; padding: 1.5rem; border: 1px solid #E0E5F2;">
+                        <h4 style="font-size: 0.9rem; font-weight: 800; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            Improvement Actions
                         </h4>
-                        <p style="color: #52665A; font-size: 1rem; line-height: 1.7; margin: 0;">
-                            ${result.overallStatus.message} We've analyzed <strong style="color: var(--primary-color);">6 key parameters</strong> for your <strong style="color: var(--primary-color);">${latestData.crop}</strong> crop to provide you with precise, actionable recommendations.
-                        </p>
+                        <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.75rem;">
+                            ${result.overallStatus.actions.map(action => `
+                                <li style="font-size: 0.95rem; color: #52665A; display: flex; align-items: flex-start; gap: 0.75rem;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="3" style="margin-top: 2px;">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    ${action}
+                                </li>
+                            `).join('')}
+                        </ul>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <h3 class="section-title" style="margin-top: 4rem; margin-bottom: 2rem;">Soil Nutrient Status</h3>
+        <div class="nutrient-status-grid">
+            ${Object.entries(result.analysis).map(([key, data]) => {
+        const icons = {
+            nitrogen: '<path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path>',
+            phosphorus: '<path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="4"></circle>',
+            potassium: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>',
+            ph: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>',
+            moisture: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>',
+            temperature: '<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>'
+        };
+
+        const statusClass = `status-${data.status}`;
+        const iconBgClass = `status-${data.status}-bg`;
+        const unit = key === 'ph' ? 'pH' : key === 'moisture' ? '%' : key === 'temperature' ? '°C' : 'mg/kg';
+
+        return `
+                    <div class="nutrient-card">
+                        <div class="nutrient-card-header">
+                            <div class="nutrient-icon-container ${iconBgClass}">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    ${icons[key] || ''}
+                                </svg>
+                            </div>
+                            <span class="nutrient-status-badge ${statusClass}">${data.status}</span>
+                        </div>
+                        <div class="nutrient-value-container">
+                            <span class="nutrient-label">${key}</span>
+                            <span class="nutrient-value">${data.value} <small style="font-size: 0.65em; opacity: 0.7;">${unit}</small></span>
+                        </div>
+                    </div>
+                `;
+    }).join('')}
         </div>
     `;
 
     // Add specific recommendations
     if (result.recommendations.length > 0) {
         let shopProducts = [];
-        if (window.ProductEngine) {
-            shopProducts = await ProductEngine.fetchProducts();
+        const engine = window.ProductEngine || (typeof ProductEngine !== 'undefined' ? ProductEngine : null);
+
+        if (engine) {
+            shopProducts = await engine.fetchProducts();
         }
 
-        html += `<h3 class="section-title">Fertilizer Recommendations</h3>`;
-        result.recommendations.forEach(rec => {
-            // Find a matching product in the shop
-            const matchingProduct = shopProducts.find(p =>
-                p.name.toLowerCase().includes(rec.fertilizer.toLowerCase()) ||
-                rec.fertilizer.toLowerCase().includes(p.name.toLowerCase())
-            );
+        html += `<h3 class="section-title" style="margin-top: 4rem;">Recommended Strategy</h3>`;
+        html += `<div class="rec-products-grid">`;
 
-            html += `
-                <div class="recommendation-card" style="border-left-color: var(--accent-green); position: relative;">
-                    <div class="rec-header">
-                        <span class="rec-title">${rec.fertilizer}</span>
-                        <span class="rec-badge">${rec.nutrient}</span>
-                    </div>
-                    <div class="rec-dosage">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                        </svg>
-                        Dosage: ${rec.dosage}
-                    </div>
-                    <p class="rec-reason">${rec.reason}</p>
-                    ${matchingProduct ? `
-                        <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #F0F2F5; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="width: 32px; height: 32px; background: #E6F7F2; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #05CD99;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <path d="M20 6L9 17l-5-5"></path>
-                                    </svg>
-                                </div>
-                                <span style="font-size: 0.85rem; color: #05CD99; font-weight: 700;">Available in Shop</span>
+        const standardize = (str) => {
+            if (!str) return '';
+            return str.toLowerCase()
+                .replace(/\(.*\)/g, '') // Remove parentheses content
+                .replace(/\[.*\]/g, '') // Remove bracketed content
+                .replace(/[^a-z\s]/g, '') // Remove everything except letters and spaces
+                .replace(/\s+/g, ' ')
+                .trim();
+        };
+
+        result.recommendations.forEach(rec => {
+            // Fuzzy search for matching product
+            const recName = standardize(rec.fertilizer);
+            const matchingProduct = shopProducts.find(p => {
+                const prodName = standardize(p.name);
+                return prodName.includes(recName) || recName.includes(prodName);
+            });
+
+            if (matchingProduct) {
+                const img = matchingProduct.image || matchingProduct.image_url || 'assets/images/products/generic-fertilizer.jpg';
+                html += `
+                    <div class="rec-product-card">
+                        <div class="rec-card-top-layout">
+                            <div class="rec-card-image">
+                                <span class="rec-type-badge">${rec.nutrient}</span>
+                                <img src="${img}" alt="${matchingProduct.name}" onerror="this.src='assets/images/tree-logo.png'">
                             </div>
-                            <button class="btn btn-primary btn-sm" onclick="ProductEngine.handleAddToCartById('${matchingProduct.id}')" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 8px;">
-                                Buy Now &rarr;
-                            </button>
+                            
+                            <div class="rec-card-ai-side">
+                                <!-- AI Explanation Section (Now in the side panel) -->
+                                <div class="rec-ai-explanation">
+                                    <span class="rec-ai-badge">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                                        AI Recommendation
+                                    </span>
+                                    <p class="rec-ai-text">${rec.reason}</p>
+                                    ${rec.ai_insight ? `<div style="margin-top: 1rem; display: flex; align-items: center; gap: 8px; color: var(--accent-green); font-weight: 700; font-size: 0.9rem;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2v20m-5-5l5 5 5-5"/></svg>
+                                        Expert Tip: ${rec.ai_insight}
+                                    </div>` : ''}
+                                </div>
+                            </div>
                         </div>
-                    ` : ''}
-                </div>
-            `;
+
+                        <div class="rec-card-content">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem;">
+                                <div style="flex: 1;">
+                                    <h4 class="rec-card-title" style="font-size: 1.25rem; margin-bottom: 0.5rem;">${matchingProduct.name}</h4>
+                                    <p class="rec-card-desc" style="margin-bottom: 1rem;">${matchingProduct.description || 'Professional grade solution for your specific soil deficiency.'}</p>
+                                    
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #64748B; background: #F1F5F9; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        Dosage: ${rec.dosage}
+                                    </div>
+                                </div>
+
+                                <div class="rec-card-footer" style="padding: 0; border: none; flex-shrink: 0; text-align: right;">
+                                    <div class="rec-card-price" style="display: block; margin-bottom: 0.75rem; font-size: 1.5rem;">₹${matchingProduct.price}</div>
+                                    <div class="rec-card-actions">
+                                        <button class="btn btn-primary" onclick="ProductEngine.handleAddToCartById('${matchingProduct.id}')" style="padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 700;">
+                                            Add to Cart
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // No match in shop - show text-only simpler info
+                html += `
+                    <div class="rec-simple-info" style="grid-column: 1 / -1;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h4 style="font-size: 1.4rem; font-weight: 800; color: var(--primary-color); margin: 0 0 0.5rem 0;">${rec.fertilizer}</h4>
+                                <span style="font-size: 0.8rem; font-weight: 800; color: var(--accent-green); text-transform: uppercase;">${rec.nutrient}</span>
+                            </div>
+                            <div class="rec-simple-dosage">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 8px;">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                </svg>
+                                Recommended Dosage: ${rec.dosage}
+                            </div>
+                        </div>
+                        
+                        <!-- AI Explanation for non-shop items -->
+                        <div class="rec-ai-explanation">
+                            <span class="rec-ai-badge">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                                AI Insights & Analysis
+                            </span>
+                            <p class="rec-ai-text">${rec.reason}</p>
+                            ${rec.ai_insight ? `<p style="margin-top: 0.75rem; color: var(--accent-green); font-weight: 700; font-size: 0.9rem;">Expert Tip: ${rec.ai_insight}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
         });
+
+        html += `</div>`;
     } else {
         html += `
             <div class="info-section" style="text-align: center; padding: 2rem;">
@@ -1335,7 +1472,13 @@ async function updateAlertBadge() {
 
         // Check if user has already viewed this specific analysis
         const lastViewedTime = localStorage.getItem('nutriroot_last_viewed_analysis');
-        if (lastViewedTime && parseInt(lastViewedTime) >= soilData.timestamp) {
+
+        // Convert timestamp to numeric if it's an ISO string (legacy compatibility)
+        const currentTs = typeof soilData.timestamp === 'string' ?
+            new Date(soilData.timestamp).getTime() :
+            soilData.timestamp;
+
+        if (lastViewedTime && parseInt(lastViewedTime) >= currentTs) {
             badge.style.display = 'none';
             return;
         }

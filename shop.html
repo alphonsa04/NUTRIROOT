@@ -106,14 +106,14 @@
 
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 1.2rem;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
         }
 
         .product-card {
             background: white;
             border-radius: 16px;
-            padding: 0.75rem;
+            padding: 1rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             /* Soft shadow */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -125,7 +125,7 @@
             /* Prevent jump on border add */
             overflow: hidden;
             /* clean edges */
-            aspect-ratio: 1 / 1;
+            min-height: 400px;
         }
 
         .recommendation-badge {
@@ -156,14 +156,15 @@
         }
 
         .product-image-container {
-            height: 40%;
+            height: 200px;
             background: #F9FAFC;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             flex-shrink: 0;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
         }
 
         .product-image {

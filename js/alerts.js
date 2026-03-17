@@ -53,8 +53,12 @@ async function renderAlertsPage() {
             renderAlertList(container, alerts, soilData.timestamp);
         }
 
-        // 4. Mark as read
-        localStorage.setItem('nutriroot_last_viewed_analysis', soilData.timestamp.toString());
+        // 4. Mark as read - ensure numeric timestamp
+        const currentTs = typeof soilData.timestamp === 'string' ?
+            new Date(soilData.timestamp).getTime() :
+            soilData.timestamp;
+
+        localStorage.setItem('nutriroot_last_viewed_analysis', currentTs.toString());
 
         // Clear badge immediately
         const badge = document.getElementById('alertBadge');

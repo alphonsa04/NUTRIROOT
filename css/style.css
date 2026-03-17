@@ -3336,3 +3336,473 @@ input::-webkit-credentials-auto-fill-button {
     background: var(--accent-green);
     transform: scale(1.1);
 }
+
+/* ========================================
+   SOIL HEALTH SCORE GAUGE
+   ======================================== */
+
+.soil-score-gauge {
+    position: relative;
+    width: 160px;
+    height: 160px;
+}
+
+.soil-score-gauge svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.soil-score-gauge .gauge-bg {
+    fill: none;
+    stroke: #E0E5F2;
+    stroke-width: 8;
+}
+
+.soil-score-gauge .gauge-progress {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+}
+
+.soil-score-gauge .gauge-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.soil-score-gauge .score-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.soil-score-gauge .score-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #707EAE;
+    margin-top: 4px;
+    letter-spacing: 1.5px;
+}
+
+/* Color Levels */
+.soil-score-gauge.score-excellent .gauge-progress {
+    stroke: #05CD99;
+}
+
+.soil-score-gauge.score-excellent .score-value {
+    color: #05CD99;
+}
+
+.soil-score-gauge.score-good .gauge-progress {
+    stroke: #4ade80;
+}
+
+.soil-score-gauge.score-good .score-value {
+    color: #4ade80;
+}
+
+.soil-score-gauge.score-fair .gauge-progress {
+    stroke: #FFAC33;
+}
+
+.soil-score-gauge.score-fair .score-value {
+    color: #FFAC33;
+}
+
+.soil-score-gauge.score-poor .gauge-progress {
+    stroke: #EE5D72;
+}
+
+.soil-score-gauge.score-poor .score-value {
+    color: #EE5D72;
+}
+
+@keyframes gauge-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.glass-card {
+    animation: gauge-fade-in 0.6s ease-out forwards;
+}
+
+/* ========================================
+   SOIL NUTRIENT STATUS CARDS
+   ======================================== */
+
+.nutrient-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+}
+
+.nutrient-card {
+    background: white;
+    border: 1px solid #E0E5F2;
+    border-radius: 20px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.nutrient-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
+    border-color: var(--accent-green);
+}
+
+.nutrient-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.nutrient-icon-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nutrient-value-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.nutrient-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #A3AED0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nutrient-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary-color);
+}
+
+.nutrient-status-badge {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Status Variations */
+.status-optimal {
+    background: #E6F7F2;
+    color: #05CD99;
+}
+
+.status-low {
+    background: #FFF5F5;
+    color: #EE5D72;
+}
+
+.status-high {
+    background: #FFF9E6;
+    color: #FFAC33;
+}
+
+.status-moderate {
+    background: #F0F2F5;
+    color: #707EAE;
+}
+
+.status-optimal-bg {
+    background: rgba(5, 205, 153, 0.1);
+    color: #05CD99;
+}
+
+.status-low-bg {
+    background: rgba(238, 93, 114, 0.1);
+    color: #EE5D72;
+}
+
+.status-high-bg {
+    background: rgba(255, 172, 51, 0.1);
+    color: #FFAC33;
+}
+
+/* ========================================
+   MODERN RECOMMENDATION PRODUCT CARDS
+   ======================================== */
+
+.rec-products-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* Single column for detailed wide cards */
+    gap: 2.5rem;
+    margin-top: 2rem;
+}
+
+.rec-product-card {
+    background: white;
+    border-radius: 24px;
+    border: 1px solid #E0E5F2;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.rec-product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(26, 60, 37, 0.12);
+    border-color: var(--accent-green);
+}
+
+.rec-card-top-layout {
+    display: flex;
+    min-height: 280px;
+    background: #F8FAFC;
+    border-bottom: 1px solid #E0E5F2;
+}
+
+.rec-card-image {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 2rem;
+    overflow: hidden;
+    border-right: 1px solid #E0E5F2;
+}
+
+.rec-card-image img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    transition: transform 0.5s ease;
+}
+
+.rec-product-card:hover .rec-card-image img {
+    transform: scale(1.1);
+}
+
+.rec-type-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    padding: 6px 12px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--accent-green);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+}
+
+.rec-card-content {
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.rec-card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.3;
+}
+
+.rec-card-desc {
+    font-size: 0.95rem;
+    color: #707EAE;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.rec-card-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #F0F2F5;
+}
+
+.rec-card-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent-green);
+}
+
+.rec-card-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Fallback Simple Info Style */
+.rec-simple-info {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid #E0E5F2;
+    border-left: 6px solid var(--accent-green);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.rec-simple-info:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.rec-simple-dosage {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background: #F8FAFC;
+    border-radius: 10px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 1rem 0;
+}
+
+/* ========================================
+   AI RECOMMENDATION EXPLANATIONS
+   ======================================== */
+
+.rec-ai-explanation {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #DCFCE7;
+    border-left: 4px solid #10B981;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.rec-ai-explanation:hover {
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.08);
+    transform: translateX(4px);
+}
+
+.rec-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #10B981;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+.rec-ai-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
+.rec-ai-text {
+    color: #374151;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    font-weight: 500;
+}
+
+.rec-ai-sparkle {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    opacity: 0.05;
+    color: #10B981;
+}
+
+.rec-simple-info .rec-ai-explanation {
+    margin-top: 1.5rem;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* AI SIDE PANEL (split layout) */
+.rec-card-ai-side {
+    flex: 1.2;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: white;
+}
+
+.rec-card-ai-side .rec-ai-explanation {
+    margin: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+.rec-card-ai-side .rec-ai-badge {
+    margin-bottom: 1rem;
+}
+
+.rec-card-ai-side .rec-ai-text {
+    font-size: 1.05rem;
+    color: #475569;
+}
+
+/* RESPONSIVE SPLIT */
+@media (max-width: 992px) {
+    .rec-card-top-layout {
+        flex-direction: column;
+    }
+
+    .rec-card-image {
+        border-right: none;
+        border-bottom: 1px solid #E0E5F2;
+        min-height: 240px;
+    }
+
+    .rec-card-ai-side {
+        padding: 1.5rem;
+    }
+}
