@@ -67,6 +67,20 @@ def on_message(client, userdata, msg):
                 latest_sensor_data["temperature"] = payload["temp"]
             if "soil_percent" in payload:
                 latest_sensor_data["moisture"] = payload["soil_percent"]
+        elif msg.topic == "nutriroot/soil_data":
+            payload = json.loads(payload_str)
+            # Map all fields from mock_sensors.py
+            field_map = {
+                "moisture": "moisture",
+                "temperature": "temperature",
+                "nitrogen": "nitrogen",
+                "phosphorus": "phosphorus",
+                "potassium": "potassium",
+                "ph": "ph"
+            }
+            for key, target in field_map.items():
+                if key in payload:
+                    latest_sensor_data[target] = payload[key]
         elif msg.topic == "nutriroot/temperature":
             try: latest_sensor_data["temperature"] = float(payload_str)
             except: pass
@@ -75,10 +89,9 @@ def on_message(client, userdata, msg):
             except: pass
             
         latest_sensor_data["last_update"] = time.strftime("%Y-%m-%d %H:%M:%S")
-        print(f"MQTT Data Received on {msg.topic}: {payload_str}")
-        print(f"Update: Temp: {latest_sensor_data['temperature']}C, Moisture: {latest_sensor_data['moisture']}%")
+        print(f"Update: {latest_sensor_data}")
     except Exception as e:
-        print(f"MQTT Error Parsing Message: {e}")
+        print(f"Error parsing MQTT message: {e}")
 
 # Initialize MQTT Client
 mqtt_client = mqtt.Client(client_id="NutriRoot_Railway_Bridge", clean_session=True)
@@ -114,12 +127,8 @@ async def read_page(page: str):
         return FileResponse(file_path)
     return {"error": "Page not found"}
 
-@app.on_event("startup")
-async def startup_event():
+if __name__ == "__main__":
     mqtt_thread = threading.Thread(target=run_mqtt, daemon=True)
     mqtt_thread.start()
-    print("Railway Bridge Ready (MQTT Thread Started)...")
-
-if __name__ == "__main__":
-    print("Starting Manual Bridge...")
+    print("Railway Bridge Ready...")
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))

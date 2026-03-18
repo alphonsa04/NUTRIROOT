@@ -722,9 +722,6 @@ function getCropRecommendation(crop, analysis) {
  * Update the dashboard with latest soil data
  */
 async function updateDashboardUI() {
-    // Start local sensor polling immediately (No Firebase)
-    startLocalSensorPolling();
-
     const latestData = await getLatestSoilData();
     if (!latestData) {
         console.log('updateDashboardUI: No soil data found');
@@ -787,6 +784,9 @@ async function updateDashboardUI() {
 
     // Update sparkline graphs
     await updateDashboardGraphs();
+
+    // Start local sensor polling (No Firebase)
+    startLocalSensorPolling();
 }
 
 /**
@@ -800,16 +800,17 @@ function startLocalSensorPolling() {
 
     const poll = async () => {
         try {
+            // Try relative first, then absolute (for Live Server compatibility)
             let response;
             try {
                 response = await fetch('/sensors');
-                if (!response.ok) throw new Error('Relative fetch failed');
+                if (!response.ok) throw new Error();
             } catch (e) {
-                console.log('Relative fetch failed, trying absolute fallback...');
+                // Fallback to absolute local bridge URL
                 response = await fetch('http://localhost:8000/sensors');
             }
 
-            if (!response.ok) throw new Error('Bridge unreachable on all paths');
+            if (!response.ok) throw new Error('Bridge unreachable');
 
             const data = await response.json();
             console.log('Local sensor data received:', data);
