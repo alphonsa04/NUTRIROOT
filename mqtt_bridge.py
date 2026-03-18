@@ -75,9 +75,10 @@ def on_message(client, userdata, msg):
             except: pass
             
         latest_sensor_data["last_update"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"MQTT Data Received on {msg.topic}: {payload_str}")
         print(f"Update: Temp: {latest_sensor_data['temperature']}C, Moisture: {latest_sensor_data['moisture']}%")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"MQTT Error Parsing Message: {e}")
 
 # Initialize MQTT Client
 mqtt_client = mqtt.Client(client_id="NutriRoot_Railway_Bridge", clean_session=True)
@@ -113,8 +114,12 @@ async def read_page(page: str):
         return FileResponse(file_path)
     return {"error": "Page not found"}
 
-if __name__ == "__main__":
+@app.on_event("startup")
+async def startup_event():
     mqtt_thread = threading.Thread(target=run_mqtt, daemon=True)
     mqtt_thread.start()
-    print("Railway Bridge Ready...")
+    print("Railway Bridge Ready (MQTT Thread Started)...")
+
+if __name__ == "__main__":
+    print("Starting Manual Bridge...")
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
